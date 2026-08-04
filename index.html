@@ -363,7 +363,9 @@ function processSheetData(json){
         };
       }
       if(status){db[date].att[staffId]=status;count++;}
-      if(lateTime)db[date].late[staffId]=lateTime;
+      // Filter invalid Google Sheets date values for empty time
+      const validLate=lateTime&&!lateTime.includes('1899')&&!lateTime.includes('T')&&lateTime.length<=5;
+      if(validLate)db[date].late[staffId]=lateTime;
       if(ph>0)db[date].phones=ph;
       if(savedAt&&!db[date].savedAt)db[date].savedAt=savedAt;
     });
