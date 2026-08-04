@@ -227,7 +227,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzcZPNXfFU8wLakQRl71JSgsy69gFZmTjpJB36hhtj5VT4dz6cfsE6zjXvvthFMwRin/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbznNrIwFbFFA8oXygdQOXx_uI4V-nglrg5B5bSoSJgN8jbz9_S3y0jtdobfhL9dDV6r/exec';
 const LS_KEY='att_v3';
 
 const STAFF=[
@@ -323,17 +323,32 @@ function loadToday(){
 
 // ── SYNC FROM GOOGLE SHEETS ──
 function parseSheetDate(raw){
-  // Handles: "2026-07-31T18:30:00.000Z", "2026-08-01", "2026-07-31T00:00:00"
-  // Google Sheets stores dates in UTC, we need IST date (UTC+5:30)
   if(!raw)return null;
   const s=String(raw).trim();
+  if(!s||s==='DATE')return null;
+
+  // Already in YYYY-MM-DD format
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // Has time component (old format) — convert UTC to IST
   if(s.includes('T')||s.includes('Z')){
-    // Parse as UTC and convert to IST
     const d=new Date(s);
-    // Add 5h30m to get IST
     const ist=new Date(d.getTime()+(5.5*60*60*1000));
     return ist.toISOString().slice(0,10);
   }
+
+  // DD/MM/YYYY format (Google Sheets display format)
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){
+    const parts=s.split('/');
+    return parts[2]+'-'+parts[1]+'-'+parts[0];
+  }
+
+  // MM/DD/YYYY format
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){
+    const parts=s.split('/');
+    return parts[2]+'-'+String(parts[0]).padStart(2,'0')+'-'+String(parts[1]).padStart(2,'0');
+  }
+
   return s.slice(0,10);
 }
 
@@ -363,9 +378,16 @@ function processSheetData(json){
         };
       }
       if(status){db[date].att[staffId]=status;count++;}
-      // Filter invalid Google Sheets date values for empty time
-      const validLate=lateTime&&!lateTime.includes('1899')&&!lateTime.includes('T')&&lateTime.length<=5;
-      if(validLate)db[date].late[staffId]=lateTime;
+      // Filter invalid Google Sheets date values
+      let cleanLate='';
+      if(lateTime){
+        const raw=String(lateTime).trim();
+        // Valid format is HH:MM only
+        if(/^\d{1,2}:\d{2}$/.test(raw)) cleanLate=raw;
+        // Extract time from datetime if present e.g. "10:35:00"
+        else if(/^\d{1,2}:\d{2}:\d{2}$/.test(raw)) cleanLate=raw.slice(0,5);
+      }
+      if(cleanLate) db[date].late[staffId]=cleanLate;
       if(ph>0)db[date].phones=ph;
       if(savedAt&&!db[date].savedAt)db[date].savedAt=savedAt;
     });
