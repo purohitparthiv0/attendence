@@ -126,7 +126,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="topbar">
   <div><h1>📅 Attendance</h1><div class="dt" id="dtLabel"></div></div>
-  <button class="rep-btn" onclick="openReports()">📋 Reports</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <input type="date" id="datePicker" style="padding:6px 10px;border:1.5px solid #16a34a;border-radius:8px;font-size:13px;font-weight:600;color:#16a34a;outline:none;cursor:pointer" onchange="changeDate(this.value)">
+    <button class="rep-btn" onclick="syncFromSheets()" style="background:#dcfce7;color:#166534">🔄</button>
+    <button class="rep-btn" onclick="openReports()">📋</button>
+  </div>
 </div>
 
 <div class="stats">
@@ -142,6 +146,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <span class="leg ll">L = Late</span>
   <span class="leg lh">H = Half-day</span>
 </div>
+<div id="dateBanner" style="display:none;background:#fef3c7;color:#92400e;padding:10px 16px;font-size:13px;font-weight:700;border-bottom:1px solid #fcd34d;text-align:center"></div>
 
 <div class="controls">
   <input type="text" id="srch" placeholder="Search name or dept..." oninput="renderGrid()">
@@ -222,7 +227,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxZ2d-0Jk22MPNg9K5Xd6CpdAt5MPedGLwMXdw_nlMvnAWSgIDPJnHshB987ZjP_bl7/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzcZPNXfFU8wLakQRl71JSgsy69gFZmTjpJB36hhtj5VT4dz6cfsE6zjXvvthFMwRin/exec';
 const LS_KEY='att_v3';
 
 const STAFF=[
@@ -261,7 +266,7 @@ const STAFF=[
 ];
 
 // STATE
-let att={}, late={}, phones=0, pendingLateId=null, viewDay=null, curTab='day';
+let att={}, late={}, phones=0, pendingLateId=null, viewDay=null, curTab='day', selectedDate=null;
 
 // ── STORAGE: localStorage as primary, Sheets as backup ──
 function lsLoad(){
@@ -274,14 +279,33 @@ function lsSave(db){
   try{localStorage.setItem(LS_KEY,JSON.stringify(db));}catch(e){}
 }
 function getDB(){return lsLoad();}
-function todayKey(){return new Date().toISOString().slice(0,10);}
-function fmtDate(){return new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
+function todayKey(){return selectedDate||new Date().toISOString().slice(0,10);}
+function isToday(){return todayKey()===new Date().toISOString().slice(0,10);}
+function fmtDate(){const d=selectedDate?new Date(selectedDate+'T00:00:00'):new Date();return d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}
 function fmtTime(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true});}
 function ini(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
 function fmtT(inp){let v=inp.value.replace(/\D/g,'');if(v.length>=3)v=v.slice(0,2)+':'+v.slice(2,4);inp.value=v;}
 function chPhone(d){phones=Math.max(0,phones+d);document.getElementById('phInp').value=phones;}
 
-// ── LOAD TODAY from localStorage ──
+// ── CHANGE DATE ──
+function changeDate(val){
+  selectedDate=val;
+  att={};late={};phones=0;
+  document.getElementById('phInp').value=0;
+  document.getElementById('dtLabel').textContent=fmtDate();
+  // show banner if past date
+  const banner=document.getElementById('dateBanner');
+  if(!isToday()){
+    banner.style.display='block';
+    const d=new Date(val+'T00:00:00');
+    banner.textContent='📅 Editing: '+d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  } else {
+    banner.style.display='none';
+  }
+  loadToday();
+}
+
+// ── LOAD DATE DATA from localStorage ──
 function loadToday(){
   const db=getDB();
   const tk=todayKey();
@@ -290,8 +314,99 @@ function loadToday(){
     late={...db[tk].late};
     phones=db[tk].phones||0;
     document.getElementById('phInp').value=phones;
+  } else {
+    att={};late={};phones=0;
+    document.getElementById('phInp').value=0;
   }
   renderStats();renderGrid();
+}
+
+// ── SYNC FROM GOOGLE SHEETS ──
+function parseSheetDate(raw){
+  // Handles: "2026-07-31T18:30:00.000Z", "2026-08-01", "2026-07-31T00:00:00"
+  // Google Sheets stores dates in UTC, we need IST date (UTC+5:30)
+  if(!raw)return null;
+  const s=String(raw).trim();
+  if(s.includes('T')||s.includes('Z')){
+    // Parse as UTC and convert to IST
+    const d=new Date(s);
+    // Add 5h30m to get IST
+    const ist=new Date(d.getTime()+(5.5*60*60*1000));
+    return ist.toISOString().slice(0,10);
+  }
+  return s.slice(0,10);
+}
+
+function processSheetData(json){
+  try{
+    if(!json||json.status!=='success'||!json.data||json.data.length<2){
+      showToast('⚠ No data in sheet yet');
+      return;
+    }
+    const rows=json.data.slice(1);
+    const db=getDB();
+    let count=0;
+    rows.forEach(row=>{
+      const date=parseSheetDate(row[0]);
+      const staffId=parseInt(row[1]);
+      const status=String(row[4]||'').trim();
+      const lateTime=String(row[5]||'').trim();
+      const savedAt=String(row[6]||'').trim();
+      const ph=parseInt(row[7])||0;
+      if(!date||date.length!==10||!staffId)return;
+      if(!db[date]){
+        const d=new Date(date+'T00:00:00');
+        db[date]={
+          date,
+          label:d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+          savedAt,att:{},late:{},phones:ph
+        };
+      }
+      if(status){db[date].att[staffId]=status;count++;}
+      if(lateTime)db[date].late[staffId]=lateTime;
+      if(ph>0)db[date].phones=ph;
+      if(savedAt&&!db[date].savedAt)db[date].savedAt=savedAt;
+    });
+    lsSave(db);
+    loadToday();
+    showToast('✓ Synced! '+count+' records loaded');
+  }catch(e){showToast('⚠ Sync error: '+e.message);}
+}
+
+function syncFromSheets(){
+  setLoad(true);
+  // Remove old script if exists
+  const old=document.getElementById('gs_sc');
+  if(old)old.remove();
+
+  const cbName='gs_cb_'+Date.now();
+  const timer=setTimeout(()=>{
+    delete window[cbName];
+    const s=document.getElementById('gs_sc');
+    if(s)s.remove();
+    setLoad(false);
+    showToast('⚠ Timeout — check internet');
+  },15000);
+
+  window[cbName]=function(json){
+    clearTimeout(timer);
+    delete window[cbName];
+    const s=document.getElementById('gs_sc');
+    if(s)s.remove();
+    setLoad(false);
+    processSheetData(json);
+  };
+
+  const sc=document.createElement('script');
+  sc.id='gs_sc';
+  sc.src=SCRIPT_URL+'?action=get&callback='+cbName+'&nocache='+Date.now();
+  sc.onerror=function(){
+    clearTimeout(timer);
+    delete window[cbName];
+    setLoad(false);
+    showToast('⚠ Cannot reach server — check internet');
+  };
+  document.head.appendChild(sc);
 }
 
 // ── RENDER ──
@@ -707,8 +822,13 @@ function openPDF(doc, filename){
 }
 
 // INIT
+const todayStr=new Date().toISOString().slice(0,10);
+document.getElementById('datePicker').value=todayStr;
+document.getElementById('datePicker').max=todayStr;
 document.getElementById('dtLabel').textContent=fmtDate();
 loadToday();
+// Auto sync from Google Sheets on load
+syncFromSheets();
 </script>
 </body>
 </html>
