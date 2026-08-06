@@ -125,11 +125,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="load-bar" id="loadBar"></div>
 
 <div class="topbar">
-  <div><h1>📅 Attendance</h1><div class="dt" id="dtLabel"></div></div>
+  <div><h1>ðŸ“… Attendance</h1><div class="dt" id="dtLabel"></div></div>
   <div style="display:flex;gap:8px;align-items:center">
     <input type="date" id="datePicker" style="padding:6px 10px;border:1.5px solid #16a34a;border-radius:8px;font-size:13px;font-weight:600;color:#16a34a;outline:none;cursor:pointer" onchange="changeDate(this.value)">
-    <button class="rep-btn" onclick="syncFromSheets()" style="background:#dcfce7;color:#166534">🔄</button>
-    <button class="rep-btn" onclick="openReports()">📋</button>
+    <button class="rep-btn" onclick="syncFromSheets()" style="background:#dcfce7;color:#166534;min-width:44px">ðŸ”„ Sync</button>
+    <button class="rep-btn" onclick="openReports()">ðŸ“‹ Reports</button>
   </div>
 </div>
 
@@ -159,23 +159,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="bot">
   <div class="warn" id="warnMsg"></div>
   <div class="ph-row">
-    <span class="ph-label">📱 Phones Today</span>
+    <span class="ph-label">ðŸ“± Phones Today</span>
     <div class="ph-ctrl">
-      <button onclick="chPhone(-1)">−</button>
+      <button onclick="chPhone(-1)">âˆ’</button>
       <input type="number" id="phInp" value="0" min="0" oninput="phones=parseInt(this.value)||0">
       <button onclick="chPhone(1)">+</button>
     </div>
   </div>
   <div class="btn-row">
-    <button class="save-btn" onclick="save()">✓ Save Attendance</button>
-    <button class="hist-btn" onclick="openReports()">📋</button>
+    <button class="save-btn" onclick="save()">âœ“ Save Attendance</button>
+    <button class="hist-btn" onclick="openReports()" style="min-width:50px">ðŸ“‹</button>
   </div>
 </div>
 
 <!-- Late Popup -->
 <div class="pop-ov" id="latePop">
   <div class="pop-box">
-    <h3>⏰ Late Entry</h3>
+    <h3>â° Late Entry</h3>
     <p id="lateFor"></p>
     <input type="text" id="lateInp" placeholder="10:35" maxlength="5" oninput="fmtT(this)">
     <div class="pop-btns">
@@ -189,11 +189,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="ov" id="repMod" onclick="bgClose(event,'repMod')">
   <div class="sheet">
     <div class="handle"></div>
-    <div class="mh"><h2>📋 Reports</h2></div>
+    <div class="mh"><h2>ðŸ“‹ Reports</h2></div>
     <div class="mb">
       <div class="tabs">
-        <button class="tab active" id="tab-day" onclick="switchTab('day')">📅 Day Wise</button>
-        <button class="tab" id="tab-month" onclick="switchTab('month')">📆 Monthly</button>
+        <button class="tab active" id="tab-day" onclick="switchTab('day')">ðŸ“… Day Wise</button>
+        <button class="tab" id="tab-month" onclick="switchTab('month')">ðŸ“† Monthly</button>
       </div>
       <div id="tab-day-content"></div>
       <div id="tab-month-content" style="display:none"></div>
@@ -214,12 +214,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <tbody id="dayTable"></tbody>
       </table>
       <br>
-      <button class="pdf-day-btn" onclick="pdfDay()">⬇ Download Day PDF</button>
+      <button class="pdf-day-btn" onclick="pdfDay()">â¬‡ Download Day PDF</button>
       <button class="wa-btn" onclick="waDay()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
         Share on WhatsApp
       </button>
-      <button class="back-btn" onclick="closeM('dayMod');openReports()">← Back</button>
+      <button class="back-btn" onclick="closeM('dayMod');openReports()">â† Back</button>
     </div>
   </div>
 </div>
@@ -268,7 +268,7 @@ const STAFF=[
 // STATE
 let att={}, late={}, phones=0, pendingLateId=null, viewDay=null, curTab='day', selectedDate=null;
 
-// ── STORAGE: localStorage as primary, Sheets as backup ──
+// â”€â”€ STORAGE: localStorage as primary, Sheets as backup â”€â”€
 function lsLoad(){
   try{
     const raw=localStorage.getItem(LS_KEY);
@@ -287,7 +287,7 @@ function ini(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase
 function fmtT(inp){let v=inp.value.replace(/\D/g,'');if(v.length>=3)v=v.slice(0,2)+':'+v.slice(2,4);inp.value=v;}
 function chPhone(d){phones=Math.max(0,phones+d);document.getElementById('phInp').value=phones;}
 
-// ── CHANGE DATE ──
+// â”€â”€ CHANGE DATE â”€â”€
 function changeDate(val){
   selectedDate=val;
   att={};late={};phones=0;
@@ -298,14 +298,14 @@ function changeDate(val){
   if(!isToday()){
     banner.style.display='block';
     const d=new Date(val+'T00:00:00');
-    banner.textContent='📅 Editing: '+d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    banner.textContent='ðŸ“… Editing: '+d.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   } else {
     banner.style.display='none';
   }
   loadToday();
 }
 
-// ── LOAD DATE DATA from localStorage ──
+// â”€â”€ LOAD DATE DATA from localStorage â”€â”€
 function loadToday(){
   const db=getDB();
   const tk=todayKey();
@@ -321,7 +321,7 @@ function loadToday(){
   renderStats();renderGrid();
 }
 
-// ── SYNC FROM GOOGLE SHEETS ──
+// â”€â”€ SYNC FROM GOOGLE SHEETS â”€â”€
 function parseSheetDate(raw){
   if(!raw)return null;
   const s=String(raw).trim();
@@ -330,7 +330,7 @@ function parseSheetDate(raw){
   // Already in YYYY-MM-DD format
   if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
 
-  // Has time component (old format) — convert UTC to IST
+  // Has time component (old format) â€” convert UTC to IST
   if(s.includes('T')||s.includes('Z')){
     const d=new Date(s);
     const ist=new Date(d.getTime()+(5.5*60*60*1000));
@@ -355,7 +355,7 @@ function parseSheetDate(raw){
 function processSheetData(json){
   try{
     if(!json||json.status!=='success'||!json.data||json.data.length<2){
-      showToast('⚠ No data in sheet yet');
+      showToast('âš  No data in sheet yet');
       return;
     }
     const rows=json.data.slice(1);
@@ -395,8 +395,8 @@ function processSheetData(json){
     });
     lsSave(db);
     loadToday();
-    showToast('✓ Synced! '+count+' records loaded');
-  }catch(e){showToast('⚠ Sync error: '+e.message);}
+    showToast('âœ“ Synced! '+count+' records loaded');
+  }catch(e){showToast('âš  Sync error: '+e.message);}
 }
 
 function syncFromSheets(){
@@ -411,7 +411,7 @@ function syncFromSheets(){
     const s=document.getElementById('gs_sc');
     if(s)s.remove();
     setLoad(false);
-    showToast('⚠ Timeout — check internet');
+    showToast('âš  Timeout â€” check internet');
   },15000);
 
   window[cbName]=function(json){
@@ -430,12 +430,12 @@ function syncFromSheets(){
     clearTimeout(timer);
     delete window[cbName];
     setLoad(false);
-    showToast('⚠ Cannot reach server — check internet');
+    showToast('âš  Cannot reach server â€” check internet');
   };
   document.head.appendChild(sc);
 }
 
-// ── RENDER ──
+// â”€â”€ RENDER â”€â”€
 function renderStats(){
   const c={P:0,A:0,L:0,H:0};
   Object.values(att).forEach(v=>{if(c[v]!==undefined)c[v]++;});
@@ -451,7 +451,7 @@ function renderGrid(){
       <div class="si">
         <div class="sn">${s.name}</div>
         <div class="sd">${s.dept}</div>
-        ${st==='L'&&lt?`<div class="lt">⏰ ${lt}</div>`:''}
+        ${st==='L'&&lt?`<div class="lt">â° ${lt}</div>`:''}
       </div>
       <div class="bg">
         <button class="ab${st==='P'?' sP':''}" onclick="mark(${s.id},'P')">P</button>
@@ -467,7 +467,7 @@ function mark(id,status){
     if(att[id]==='L'){delete att[id];delete late[id];renderStats();renderGrid();return;}
     pendingLateId=id;
     const s=STAFF.find(x=>x.id===id);
-    document.getElementById('lateFor').textContent=s.name+' — Entry time?';
+    document.getElementById('lateFor').textContent=s.name+' â€” Entry time?';
     document.getElementById('lateInp').value=late[id]||'';
     document.getElementById('latePop').classList.add('open');
     setTimeout(()=>document.getElementById('lateInp').focus(),100);
@@ -490,7 +490,7 @@ function cancelLate(){
   pendingLateId=null;
 }
 
-// ── SAVE ──
+// â”€â”€ SAVE â”€â”€
 let editConfirmed = false;
 
 async function save(){
@@ -499,7 +499,7 @@ async function save(){
   if(unm.length>0){
     const w=document.getElementById('warnMsg');
     w.style.display='block';
-    w.textContent='⚠ '+unm.length+' unmarked: '+unm.slice(0,3).map(s=>s.name).join(', ')+(unm.length>3?'...':'');
+    w.textContent='âš  '+unm.length+' unmarked: '+unm.slice(0,3).map(s=>s.name).join(', ')+(unm.length>3?'...':'');
     setTimeout(()=>{w.style.display='none';},4000);
     document.getElementById('srch').value='';renderGrid();
     return;
@@ -511,7 +511,7 @@ async function save(){
   if(db[tk] && !editConfirmed){
     const w=document.getElementById('warnMsg');
     w.style.display='block';
-    w.innerHTML='⚠ Aaj ka data already saved hai! &nbsp;<button onclick="confirmEdit()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer">Fir bhi Save karo</button>';
+    w.innerHTML='âš  Aaj ka data already saved hai! &nbsp;<button onclick="confirmEdit()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer">Fir bhi Save karo</button>';
     return;
   }
 
@@ -521,7 +521,7 @@ async function save(){
   // 1. Save to localStorage FIRST
   db[tk]={date:tk,label:fmtDate(),savedAt,att:{...att},late:{...late},phones};
   lsSave(db);
-  showToast('✓ Saved!');
+  showToast('âœ“ Saved!');
 
   // Hide warning
   const w=document.getElementById('warnMsg');
@@ -549,7 +549,7 @@ function confirmEdit(){
   save();
 }
 
-// ── REPORTS ──
+// â”€â”€ REPORTS â”€â”€
 function openReports(){
   switchTab(curTab);
   openM('repMod');
@@ -575,7 +575,7 @@ function renderDayList(){
     Object.values(r.att||{}).forEach(v=>{if(c[v]!==undefined)c[v]++;});
     return`<div class="rc" onclick="openDay('${k}')">
       <div class="rc-title">${r.label||k}</div>
-      <div class="rc-sub">Saved: ${r.savedAt||'—'} &nbsp;·&nbsp; 📱 ${r.phones||0} phones</div>
+      <div class="rc-sub">Saved: ${r.savedAt||'â€”'} &nbsp;Â·&nbsp; ðŸ“± ${r.phones||0} phones</div>
       <div class="pills">
         <span class="pill pp">P: ${c.P}</span>
         <span class="pill pa">A: ${c.A}</span>
@@ -613,7 +613,7 @@ function renderMonthList(){
         <span class="pill ph">H: ${c.H}</span>
       </div>
       <div style="margin-top:10px">
-        <button class="month-pdf-btn" onclick="event.stopPropagation();pdfMonth('${m}')">⬇ Download Monthly PDF</button>
+        <button class="month-pdf-btn" onclick="event.stopPropagation();pdfMonth('${m}')">â¬‡ Download Monthly PDF</button>
       </div>
     </div>`;
   }).join('');
@@ -646,29 +646,29 @@ function openDay(dk){
   closeM('repMod');openM('dayMod');
 }
 
-// ── WA SHARE ──
+// â”€â”€ WA SHARE â”€â”€
 function waDay(){
   if(!viewDay)return;
   const db=getDB();const r=db[viewDay];
   const c={P:0,A:0,L:0,H:0};
   STAFF.forEach(s=>{const v=r.att[s.id]||'-';if(c[v]!==undefined)c[v]++;});
   const lines=STAFF.map((s,i)=>{
-    const st=r.att[s.id]||'—';const lt=r.late&&r.late[s.id]?` (${r.late[s.id]})`:'';
-    return`${String(i+1).padStart(2,'0')}. ${s.name} (${s.dept}) — ${st}${lt}`;
+    const st=r.att[s.id]||'â€”';const lt=r.late&&r.late[s.id]?` (${r.late[s.id]})`:'';
+    return`${String(i+1).padStart(2,'0')}. ${s.name} (${s.dept}) â€” ${st}${lt}`;
   });
-  const msg=[`*ATTENDANCE REPORT*`,`━━━━━━━━━━━━━━━━━━━━━`,
-    `📅 ${r.label||viewDay}`,`🕐 Saved: ${r.savedAt&&!String(r.savedAt).includes('1899')?r.savedAt:'—'}`,
-    `━━━━━━━━━━━━━━━━━━━━━`,
-    `✅ Present  : ${c.P}`,`❌ Absent   : ${c.A}`,
-    `⏰ Late     : ${c.L}`,`🔵 Half-day : ${c.H}`,
-    `📱 Phones   : ${r.phones||0}`,`👥 Total    : ${STAFF.length}`,
-    `━━━━━━━━━━━━━━━━━━━━━`,`*EMPLOYEE-WISE STATUS*`,``,...lines,``,
-    `━━━━━━━━━━━━━━━━━━━━━`,`Generated: ${new Date().toLocaleString('en-IN')}`
+  const msg=[`*ATTENDANCE REPORT*`,`â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”`,
+    `ðŸ“… ${r.label||viewDay}`,`ðŸ• Saved: ${r.savedAt&&!String(r.savedAt).includes('1899')?r.savedAt:'â€”'}`,
+    `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”`,
+    `âœ… Present  : ${c.P}`,`âŒ Absent   : ${c.A}`,
+    `â° Late     : ${c.L}`,`ðŸ”µ Half-day : ${c.H}`,
+    `ðŸ“± Phones   : ${r.phones||0}`,`ðŸ‘¥ Total    : ${STAFF.length}`,
+    `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”`,`*EMPLOYEE-WISE STATUS*`,``,...lines,``,
+    `â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”â”`,`Generated: ${new Date().toLocaleString('en-IN')}`
   ].join('\n');
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
-// ── PDF DAY ──
+// â”€â”€ PDF DAY â”€â”€
 function pdfDay(){
   if(!viewDay)return;
   const db=getDB();const r=db[viewDay];
@@ -733,13 +733,13 @@ function pdfDay(){
   openPDF(doc, 'Attendance_'+(viewDay||'day')+'.pdf');
 }
 
-// ── PDF MONTHLY — strictly 1 page per staff ──
+// â”€â”€ PDF MONTHLY â€” strictly 1 page per staff â”€â”€
 function pdfMonth(month){
   const db=getDB();
   const [y,mo]=month.split('-');
   const monthLabel=new Date(y,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   const days=Object.keys(db).filter(k=>k.startsWith(month)).sort();
-  if(!days.length){showToast('⚠ No data for this month!');return;}
+  if(!days.length){showToast('âš  No data for this month!');return;}
 
   const {jsPDF}=window.jspdf;
   const pw=210,ph=297,mg=10,cw=190;
@@ -811,7 +811,7 @@ function pdfMonth(month){
     doc.text('Saved At',mg+145,y2+4);
     y2+=6;
 
-    // ROWS — ALL ON ONE PAGE
+    // ROWS â€” ALL ON ONE PAGE
     const stBg={P:[220,252,231],A:[254,226,226],L:[254,243,199],H:[219,234,254],'-':[245,245,245]};
     const stTc={P:[22,163,74],A:[220,38,38],L:[217,119,6],H:[37,99,235],'-':[150,150,150]};
 
@@ -867,9 +867,9 @@ function pdfMonth(month){
   });
 
   doc.save('Monthly_'+monthLabel.replace(' ','_')+'.pdf');
-  showToast('✓ Monthly PDF Downloaded!');
+  showToast('âœ“ Monthly PDF Downloaded!');
 }
-// ── PDF OPEN (works on iOS Safari too) ──
+// â”€â”€ PDF OPEN (works on iOS Safari too) â”€â”€
 function openPDF(doc, filename){
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   if(isIOS){
@@ -877,11 +877,40 @@ function openPDF(doc, filename){
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
-    showToast('✓ PDF khul gayi! Share se Save karo');
+    showToast('âœ“ PDF khul gayi! Share se Save karo');
   } else {
     doc.save(filename);
-    showToast('✓ PDF Downloaded!');
+    showToast('âœ“ PDF Downloaded!');
   }
+}
+
+// â”€â”€ MODAL HELPERS (iOS Safari compatible) â”€â”€
+function openM(id){
+  const el=document.getElementById(id);
+  el.style.display='flex';
+  el.style.alignItems='flex-end';
+  // iOS Safari scroll fix
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
+  document.body.style.top='-'+window.scrollY+'px';
+}
+function closeM(id){
+  const el=document.getElementById(id);
+  el.style.display='none';
+  const scrollY=document.body.style.top;
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.width='';
+  document.body.style.top='';
+  window.scrollTo(0,parseInt(scrollY||'0')*-1);
+}
+function bgClose(e,id){if(e.target===document.getElementById(id))closeM(id);}
+function setLoad(v){document.getElementById('loadBar').classList.toggle('show',v);}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
 }
 
 // INIT
