@@ -116,8 +116,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="dt" id="dtLabel"></div>
   </div>
   <div class="top-right">
-    <button class="date-btn" id="dateDisplay" onclick="document.getElementById('datePicker').click()">Today</button>
-    <input type="date" id="datePicker" style="display:none;position:absolute" onchange="changeDate(this.value)">
+    <input type="date" id="datePicker" class="date-btn" onchange="changeDate(this.value)" style="border:2px solid #16a34a;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;color:#16a34a;background:#fff;cursor:pointer;-webkit-appearance:none;outline:none">
     <button class="icon-btn sync-btn" onclick="syncFromSheets()">&#x21bb;</button>
     <button class="icon-btn rep-btn2" onclick="openReports()">&#128203;</button>
   </div>
@@ -278,7 +277,7 @@ function closeM(id){
   document.body.style.overflow='';
 }
 
-// â”€â”€ DATE â”€â”€
+// ── DATE ──
 function changeDate(v){
   selDate=v;
   att={};late={};phones=0;
@@ -286,7 +285,6 @@ function changeDate(v){
   editConfirmed=false;
   const d=new Date(v+'T00:00:00');
   const label=d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
-  document.getElementById('dateDisplay').textContent=label;
   document.getElementById('dtLabel').textContent=fmtKey(v);
   const banner=document.getElementById('editBanner');
   if(!isToday()){
@@ -313,7 +311,7 @@ function loadCurDate(){
   renderStats();renderGrid();
 }
 
-// â”€â”€ RENDER â”€â”€
+// ── RENDER ──
 function renderStats(){
   const c={P:0,A:0,L:0,H:0};
   Object.values(att).forEach(v=>{if(c[v]!==undefined)c[v]++});
@@ -346,7 +344,7 @@ function mark(id,st){
   if(st==='L'){
     if(att[id]==='L'){delete att[id];delete late[id];renderStats();renderGrid();return}
     pendingLateId=id;
-    document.getElementById('lateFor').textContent=STAFF.find(s=>s.id===id).name+' â€” entry time?';
+    document.getElementById('lateFor').textContent=STAFF.find(s=>s.id===id).name+' — entry time?';
     document.getElementById('lateInp').value=late[id]||'';
     document.getElementById('latePop').style.display='flex';
     setTimeout(()=>document.getElementById('lateInp').focus(),100);
@@ -369,7 +367,7 @@ function cancelLate(){
   pendingLateId=null;
 }
 
-// â”€â”€ SAVE â”€â”€
+// ── SAVE ──
 async function doSave(){
   const unm=STAFF.filter(s=>!att[s.id]);
   if(unm.length>0){
@@ -403,7 +401,7 @@ async function doSave(){
 }
 function forceEdit(){editConfirmed=true;document.getElementById('warnMsg').style.display='none';doSave()}
 
-// â”€â”€ SYNC â”€â”€
+// ── SYNC ──
 function syncFromSheets(){
   setLoad(true);
   const old=document.getElementById('gs_sc');
@@ -424,18 +422,23 @@ function syncFromSheets(){
       rows.forEach(row=>{
         const rawDate=String(row[0]||'').trim();
         if(!rawDate||rawDate==='DATE')return;
-        // Parse date - handle YYYY-MM-DD or DD/MM/YYYY
+        // Parse date - handle multiple formats
         let date=rawDate;
         if(rawDate.includes('/')){
           const p=rawDate.split('/');
-          if(p.length===3){
-            // could be DD/MM/YYYY or MM/DD/YYYY - check year position
-            if(p[2].length===4) date=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+          if(p.length===3&&p[2].length===4){
+            // DD/MM/YYYY format from Google Sheets display
+            date=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
           }
+        } else if(rawDate.includes('T')||rawDate.includes('Z')){
+          // ISO format - convert UTC to IST (+5:30)
+          const d=new Date(rawDate);
+          const ist=new Date(d.getTime()+(5.5*60*60*1000));
+          date=ist.toISOString().slice(0,10);
         } else if(rawDate.length>10){
           date=rawDate.slice(0,10);
         }
-        if(!date||date.length!==10)return;
+        if(!date||date.length!==10||!date.match(/^\d{4}-\d{2}-\d{2}$/))return;
         const staffId=parseInt(row[1]);
         if(!staffId||staffId===0)return;
         const status=String(row[4]||'').trim();
@@ -466,7 +469,7 @@ function syncFromSheets(){
   document.head.appendChild(sc);
 }
 
-// â”€â”€ REPORTS â”€â”€
+// ── REPORTS ──
 function openReports(){switchTab(curTab);openM('repMod')}
 function switchTab(tab){
   curTab=tab;
@@ -558,7 +561,7 @@ function openDay(k){
   closeM('repMod');openM('dayMod');
 }
 
-// â”€â”€ WHATSAPP â”€â”€
+// ── WHATSAPP ──
 function waDay(){
   if(!viewDayKey)return;
   const db=getDB();const r=db[viewDayKey];
@@ -589,7 +592,7 @@ function waDay(){
   window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
 }
 
-// â”€â”€ PDF DAY â”€â”€
+// ── PDF DAY ──
 function pdfDay(){
   if(!viewDayKey)return;
   const db=getDB();const r=db[viewDayKey];
@@ -651,7 +654,7 @@ function pdfDay(){
   toast('PDF ready!');
 }
 
-// â”€â”€ PDF MONTHLY â”€â”€
+// ── PDF MONTHLY ──
 function pdfMonth(month){
   const db=getDB();
   const [y,mo]=month.split('-');
@@ -749,12 +752,12 @@ function pdfMonth(month){
   toast('Monthly PDF ready!');
 }
 
-// â”€â”€ INIT â”€â”€
+// ── INIT ──
 const ts=todayStr();
 document.getElementById('datePicker').value=ts;
 document.getElementById('datePicker').max=ts;
 document.getElementById('dtLabel').textContent=fmtKey(ts);
-document.getElementById('dateDisplay').textContent=new Date(ts+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+// date picker shows date natively
 loadCurDate();
 syncFromSheets();
 </script>
