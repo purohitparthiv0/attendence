@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Staff Attendance</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16a34a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;padding-bottom:130px}
@@ -144,6 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
   <div class="top-right">
     <input type="date" id="datePicker" class="date-btn" onchange="changeDate(this.value)" style="-webkit-appearance:none;outline:none">
+    <button class="icon-btn" id="installBtn" style="display:none;background:#f0fdf4;border-color:#86efac;color:#16a34a" onclick="doInstall()" title="Install">&#11015;</button>
     <button class="icon-btn" onclick="openStaffMgr()" title="Staff">&#128101;</button>
     <button class="icon-btn sync-btn" onclick="syncFromSheets(true)" title="Sync">&#x21bb;</button>
     <button class="icon-btn rep-btn2" onclick="openReports()" title="Reports">&#128203;</button>
@@ -328,27 +336,26 @@ function av(id){return PAL[(id-1)%PAL.length]}
 function setLoad(v){document.getElementById('loadbar').style.display=v?'block':'none'}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2500)}
 /* modal stack: X, backdrop tap, aur phone ka back button — teeno se band hota hai */
-let mStack=[];
+let mStack=[],histDepth=0,skipPop=false;
 function openM(id){
   document.getElementById(id).style.display='flex';
   document.body.style.overflow='hidden';
   mStack.push(id);
-  try{history.pushState({m:mStack.length},'')}catch(e){}
+  try{history.pushState({m:mStack.length},'');histDepth++}catch(e){}
 }
 function hideTop(){
   const id=mStack.pop();
   if(id)document.getElementById(id).style.display='none';
   if(!mStack.length)document.body.style.overflow='';
 }
+/* turant band karo — history.back() ka intezaar mat karo */
 function closeM(id){
-  if(mStack.length&&mStack[mStack.length-1]===id){
-    try{history.back()}catch(e){hideTop()}   // popstate hideTop chala dega
-  }else{
-    const i=mStack.lastIndexOf(id);
-    if(i>-1)mStack.splice(i,1);
-    document.getElementById(id).style.display='none';
-    if(!mStack.length)document.body.style.overflow='';
-  }
+  const i=mStack.lastIndexOf(id);
+  if(i>-1)mStack.splice(i,1);
+  const el=document.getElementById(id);
+  if(el)el.style.display='none';
+  if(!mStack.length)document.body.style.overflow='';
+  if(histDepth>0){histDepth--;skipPop=true;try{history.back()}catch(e){skipPop=false}}
 }
 /* ek modal se doosre mein jao bina history entry badhaye */
 function swapM(from,to){
@@ -356,7 +363,11 @@ function swapM(from,to){
   document.getElementById(to).style.display='flex';
   if(mStack.length)mStack[mStack.length-1]=to;else mStack.push(to);
 }
-window.addEventListener('popstate',function(){if(mStack.length)hideTop()});
+window.addEventListener('popstate',function(){
+  if(skipPop){skipPop=false;return}
+  if(histDepth>0)histDepth--;
+  if(mStack.length)hideTop();
+});
 
 /* ── staff store ── */
 function loadStaff(){
@@ -422,29 +433,20 @@ function renderStats(){
   document.getElementById('cX').textContent=pc;
   document.getElementById('phCount').textContent=pc+'/'+elig;
   ['P','A','L','H','X'].forEach(k=>document.getElementById('st-'+k).classList.toggle('on',filter===k));
+}
+/* chips sirf tab banti hain jab dept/filter badle — har tap par nahi */
+function renderChips(){
   const ds=depts();
   document.getElementById('deptChips').innerHTML=
     '<button class="chip'+(deptFilter?'':' on')+'" onclick="setDept(null)">Sab</button>'+
     ds.map(d=>'<button class="chip'+(deptFilter===d?' on':'')+'" onclick="setDept(\''+esc(d).replace(/'/g,"\\'")+'\')">'+esc(d)+'</button>').join('');
 }
 function setFilter(f){filter=filter===f?null:f;renderStats();renderGrid()}
-function setDept(d){deptFilter=d;renderStats();renderGrid()}
+function setDept(d){deptFilter=d;renderChips();renderGrid()}
 
-function renderGrid(){
-  const q=document.getElementById('srch').value.toLowerCase();
-  const list=STAFF.filter(s=>{
-    if(q&&!(s.name.toLowerCase().includes(q)||s.dept.toLowerCase().includes(q)))return false;
-    if(deptFilter&&s.dept!==deptFilter)return false;
-    if(filter==='X')return !!ph[s.id]&&att[s.id]!=='A';
-    if(filter&&att[s.id]!==filter)return false;
-    return true;
-  });
-  const el=document.getElementById('grid');
-  if(!STAFF.length){el.innerHTML='<div class="empty">Koi staff nahi hai.<br>Upar &#128101; dabao aur add karo.</div>';return}
-  if(!list.length){el.innerHTML='<div class="empty">Koi match nahi mila</div>';return}
-  el.innerHTML=list.map(s=>{
-    const st=att[s.id]||'',lt=late[s.id]||'',a=av(s.id),isA=st==='A';
-    return `<div class="sc${st?' mk-'+st:''}">
+function cardHTML(s){
+  const st=att[s.id]||'',lt=late[s.id]||'',a=av(s.id),isA=st==='A';
+  return `<div class="sc${st?' mk-'+st:''}" data-id="${s.id}">
       <div class="av" style="background:${a[0]};color:${a[1]}">${esc(ini(s.name))}</div>
       <div class="si">
         <div class="sn">${esc(s.name)}</div>
@@ -460,7 +462,32 @@ function renderGrid(){
         <button class="ab${st==='H'?' sH':''}" onclick="mark(${s.id},'H')">H</button>
       </div>
     </div>`;
-  }).join('');
+}
+/* SPEED: ek tap = sirf ek card dobara banta hai, poori list nahi */
+function refreshCard(id){
+  if(filter||deptFilter){renderGrid();return}
+  const el=document.querySelector('.sc[data-id="'+id+'"]');
+  if(!el){renderGrid();return}
+  const s=STAFF.find(x=>x.id===id);
+  if(!s){renderGrid();return}
+  const t=document.createElement('div');
+  t.innerHTML=cardHTML(s);
+  el.replaceWith(t.firstElementChild);
+}
+
+function renderGrid(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const list=STAFF.filter(s=>{
+    if(q&&!(s.name.toLowerCase().includes(q)||s.dept.toLowerCase().includes(q)))return false;
+    if(deptFilter&&s.dept!==deptFilter)return false;
+    if(filter==='X')return !!ph[s.id]&&att[s.id]!=='A';
+    if(filter&&att[s.id]!==filter)return false;
+    return true;
+  });
+  const el=document.getElementById('grid');
+  if(!STAFF.length){el.innerHTML='<div class="empty">Koi staff nahi hai.<br>Upar &#128101; dabao aur add karo.</div>';return}
+  if(!list.length){el.innerHTML='<div class="empty">Koi match nahi mila</div>';return}
+  el.innerHTML=list.map(cardHTML).join('');
 }
 
 /* ── marking ── */
@@ -474,7 +501,7 @@ function mark(id,st,forceEditTime){
   att[id]=st;
   delete late[id];
   if(st==='A')ph[id]=false;
-  renderStats();renderGrid();
+  renderStats();refreshCard(id);
 }
 function openLate(id){
   pendingLateId=id;
@@ -489,11 +516,12 @@ function confirmLate(){
   const t=document.getElementById('lateInp').value.trim()||hhmm();
   snap();
   att[pendingLateId]='L';late[pendingLateId]=t;
-  pendingLateId=null;closeM('latePop');renderStats();renderGrid();
+  const id=pendingLateId;
+  pendingLateId=null;closeM('latePop');renderStats();refreshCard(id);
 }
 function cancelLate(){pendingLateId=null;closeM('latePop')}
 function markAll(s){snap();STAFF.forEach(x=>{att[x.id]=s;delete late[x.id]});renderStats();renderGrid();toast('Sab '+s+' mark ho gaye')}
-function togPhone(id){if(att[id]==='A')return;snap();ph[id]=!ph[id];renderStats();renderGrid()}
+function togPhone(id){if(att[id]==='A')return;snap();ph[id]=!ph[id];renderStats();refreshCard(id)}
 function allPhones(){snap();STAFF.forEach(s=>{if(att[s.id]!=='A')ph[s.id]=true});renderStats();renderGrid();toast('Sab ke phone jama')}
 
 /* ── staff manager ── */
@@ -518,7 +546,7 @@ function addStaff(){
   STAFF.push({id:nextId(),name:n,dept:d});saveStaff();
   document.getElementById('nName').value='';
   att[STAFF[STAFF.length-1].id]='P';
-  renderMgr();renderStats();renderGrid();toast(n+' add ho gaya');
+  renderMgr();renderChips();renderStats();renderGrid();toast(n+' add ho gaya');
 }
 function bulkAdd(){
   const lines=document.getElementById('bulk').value.split('\n');let n=0;
@@ -530,21 +558,21 @@ function bulkAdd(){
   });
   if(!n){toast('Kuch add nahi hua');return}
   saveStaff();document.getElementById('bulk').value='';
-  renderMgr();renderStats();renderGrid();toast(n+' staff add ho gaye');
+  renderMgr();renderChips();renderStats();renderGrid();toast(n+' staff add ho gaye');
 }
 function editStaff(id){
   const s=STAFF.find(x=>x.id===id);if(!s)return;
   const n=prompt('Naam:',s.name);if(n===null)return;
   const d=prompt('Department:',s.dept);if(d===null)return;
   s.name=n.trim().toUpperCase()||s.name;s.dept=d.trim().toUpperCase()||s.dept;
-  saveStaff();renderMgr();renderGrid();toast('Update ho gaya');
+  saveStaff();renderMgr();renderChips();renderGrid();toast('Update ho gaya');
 }
 function delStaff(id){
   const s=STAFF.find(x=>x.id===id);if(!s)return;
   if(!confirm(s.name+' ko list se hata dein?\n\nPurane record mein naam rahega.'))return;
   STAFF=STAFF.filter(x=>x.id!==id);saveStaff();
   delete att[id];delete late[id];delete ph[id];
-  renderMgr();renderStats();renderGrid();toast(s.name+' hata diya');
+  renderMgr();renderChips();renderStats();renderGrid();toast(s.name+' hata diya');
 }
 
 /* ── backup ── */
@@ -567,7 +595,7 @@ function importBackup(ev){
       if(!d.staff||!d.db)throw 0;
       if(!confirm('Abhi ka saara data replace ho jayega. Aage badhein?'))return;
       STAFF=d.staff;saveStaff();saveDB(d.db);
-      loadCurDate();renderMgr();toast('Backup import ho gaya');
+      loadCurDate();renderChips();renderMgr();toast('Backup import ho gaya');
     }catch(e){alert('Ye file padhi nahi ja rahi. Sahi backup file chuno.')}
   };
   fr.readAsText(f);ev.target.value='';
@@ -785,8 +813,24 @@ function csvMonth(m){
 }
 
 /* ── PDF day ── */
-function pdfDay(){
+/* SPEED: jsPDF (~350KB) sirf tab load hota hai jab PDF banana ho */
+let jspdfP=null;
+function loadJsPDF(){
+  if(window.jspdf)return Promise.resolve();
+  if(jspdfP)return jspdfP;
+  setLoad(true);
+  jspdfP=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=()=>{setLoad(false);res()};
+    s.onerror=()=>{setLoad(false);jspdfP=null;rej(new Error('fail'))};
+    document.head.appendChild(s);
+  });
+  return jspdfP;
+}
+async function pdfDay(){
   if(!viewDayKey)return;
+  try{await loadJsPDF()}catch(e){toast('PDF library nahi aayi — ek baar internet se kholo');return}
   const db=getDB(),r=db[viewDayKey],rph=r.ph||{};
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
@@ -845,6 +889,10 @@ function pdfDay(){
 
 /* ── PDF monthly ── */
 function pdfMonth(month){
+  loadJsPDF().then(()=>buildMonthPDF(month))
+    .catch(()=>toast('PDF library nahi aayi — ek baar internet se kholo'));
+}
+function buildMonthPDF(month){
   const db=getDB(),[y,mo]=month.split('-');
   const monthLabel=new Date(y,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   const days=Object.keys(db).filter(k=>k.startsWith(month)).sort();
@@ -926,8 +974,45 @@ const ts=todayStr();
 document.getElementById('datePicker').value=ts;
 document.getElementById('datePicker').max=ts;
 document.getElementById('dtLabel').textContent=fmtKey(ts);
+renderChips();
 loadCurDate();
-syncFromSheets(false);
+
+/* SPEED: sync ab load ko rokti nahi. Aaj ka record pehle se hai to
+   background sync skip — sirf naye phone / naye din par chalti hai. */
+setTimeout(function(){
+  if(!navigator.onLine)return;
+  const db=getDB();
+  if(db[ts])return;
+  syncFromSheets(false);
+},1200);
+
+/* ── PWA ── */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+/* home screen pe lagane ka button — Chrome ke prompt ke saath */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();deferredPrompt=e;
+  const b=document.getElementById('installBtn');
+  if(b)b.style.display='flex';
+});
+function doInstall(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.finally(function(){
+    deferredPrompt=null;
+    const b=document.getElementById('installBtn');
+    if(b)b.style.display='none';
+  });
+}
+window.addEventListener('appinstalled',function(){
+  const b=document.getElementById('installBtn');
+  if(b)b.style.display='none';
+  toast('Home screen pe lag gaya');
+});
 </script>
 </body>
 </html>
