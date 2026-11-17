@@ -629,19 +629,36 @@ async function doSave(){
   const c={P:0,A:0};STAFF.forEach(s=>{if(c[att[s.id]]!==undefined)c[att[s.id]]++});
   toast('Saved — '+c.P+' present, '+c.A+' absent');
   setLoad(true);
+  let sent=true;
   try{
+    if(!navigator.onLine)throw new Error('offline');
     const records=STAFF.map(s=>({date:k,staffId:s.id,name:s.name,dept:s.dept,
       status:att[s.id]||'',lateTime:late[s.id]||'',phone:ph[s.id]?'Y':'N',savedAt,phones:phTotal}));
     await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'save',records,phones:phTotal,date:k})});
-  }catch(e){}
+  }catch(e){sent=false}
   setLoad(false);
+  if(!sent)toast('Phone mein save hua, par Sheet mein NAHI gaya — internet check karke dobara Save dabao');
 }
 function forceEdit(){editConfirmed=true;document.getElementById('warnMsg').style.display='none';doSave()}
 
 /* ── sync ──
-   FIX: page load par sync ab sirf wo dates bharta hai jo phone mein hain hi nahi.
-   Poora dobara kheenchna ho to upar ↻ dabao. */
+   Sheet hi asli record hai.
+   ↻ (manual): Sheet ki har date phone mein naye sire se bharti hai aur staff list
+   Sheet ke sabse naye din se aati hai (naye/hataye hue staff bhi).
+   Page load (auto): sirf wo dates jo phone mein nahi hain + staff list. */
+function normDate(raw){
+  raw=String(raw==null?'':raw).trim();
+  if(!raw||raw==='DATE')return '';
+  let date=raw;
+  if(raw.includes('/')){
+    const p=raw.split('/');
+    if(p.length===3&&p[2].length===4)date=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+  }else if(raw.includes('T')||raw.includes('Z')){
+    const d=new Date(raw);date=new Date(d.getTime()+19800000).toISOString().slice(0,10);
+  }else if(raw.length>10)date=raw.slice(0,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)?date:'';
+}
 function syncFromSheets(manual){
   setLoad(true);
   const old=document.getElementById('gs_sc');if(old)old.remove();
@@ -656,35 +673,59 @@ function syncFromSheets(manual){
     setLoad(false);
     try{
       if(!json||json.status!=='success'||!json.data||json.data.length<2){if(manual)toast('Sheet mein data nahi mila');return}
-      const rows=json.data.slice(1),db=getDB();let touched=0;
+      const rows=json.data.slice(1),db=getDB();
+      /* date -> {staffId -> row}; baad wali row jeetti hai */
+      const byDate={};
       rows.forEach(row=>{
-        const raw=String(row[0]||'').trim();
-        if(!raw||raw==='DATE')return;
-        let date=raw;
-        if(raw.includes('/')){
-          const p=raw.split('/');
-          if(p.length===3&&p[2].length===4)date=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
-        }else if(raw.includes('T')||raw.includes('Z')){
-          const d=new Date(raw);date=new Date(d.getTime()+19800000).toISOString().slice(0,10);
-        }else if(raw.length>10)date=raw.slice(0,10);
-        if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
-        if(!manual&&db[date])return;              // local jeetega
-        const staffId=parseInt(row[1]);if(!staffId)return;
-        const status=String(row[4]||'').trim();
-        const rl=String(row[5]||'').trim();
-        const lateTime=/^\d{1,2}:\d{2}$/.test(rl)?rl:'';
-        const rs=String(row[6]||'').trim();
-        const savedAt=(rs.includes('1899')||rs.includes('T'))?'':rs;
-        const phn=parseInt(row[7])||0;
-        if(!db[date])db[date]={date,label:fmtKey(date),savedAt,att:{},late:{},ph:{},phones:phn};
-        if(status)db[date].att[staffId]=status;
-        if(lateTime)db[date].late[staffId]=lateTime;
-        if(phn>0)db[date].phones=phn;
-        if(savedAt&&!db[date].savedAt)db[date].savedAt=savedAt;
-        touched++;
+        const date=normDate(row[0]);if(!date)return;
+        const id=parseInt(row[1]);if(!id)return;
+        (byDate[date]=byDate[date]||{})[id]=row;
       });
-      saveDB(db);loadCurDate();
-      if(manual)toast(touched?'Synced!':'Sab already up to date');
+      const dates=Object.keys(byDate).sort();
+      if(!dates.length){if(manual)toast('Sheet mein data nahi mila');return}
+
+      /* 1) staff list — sabse naye din ki rows se */
+      let staffChanged=false;
+      const lastRows=byDate[dates[dates.length-1]];
+      const newStaff=Object.keys(lastRows).map(id=>{
+        const r=lastRows[id];
+        return {id:parseInt(id),name:String(r[2]||'').trim(),dept:String(r[3]||'').trim()};
+      }).filter(x=>x.name).sort((x,y)=>x.id-y.id);
+      const cur=JSON.stringify(STAFF.map(x=>({id:x.id,name:x.name,dept:x.dept})));
+      if(newStaff.length&&JSON.stringify(newStaff)!==cur){
+        try{localStorage.setItem('att_staff_prev',JSON.stringify(STAFF))}catch(e){}
+        STAFF=newStaff;saveStaff();staffChanged=true;
+        if(deptFilter&&depts().indexOf(deptFilter)<0)deptFilter=null;
+      }
+
+      /* 2) attendance records */
+      let touched=0;
+      dates.forEach(date=>{
+        if(!manual&&db[date])return;            // auto: local jeetega
+        const rs=byDate[date],prev=db[date];
+        const rec={date,label:fmtKey(date),savedAt:'',att:{},late:{},
+                   ph:(prev&&prev.ph)?prev.ph:{},phones:0};
+        Object.keys(rs).forEach(id=>{
+          const row=rs[id];
+          const status=String(row[4]||'').trim();
+          const rl=String(row[5]||'').trim();
+          const sa=String(row[6]||'').trim();
+          const phn=parseInt(row[7])||0;
+          if(status)rec.att[id]=status;
+          if(/^\d{1,2}:\d{2}$/.test(rl))rec.late[id]=rl;
+          else if(status==='L'&&prev&&prev.late&&prev.late[id])rec.late[id]=prev.late[id];
+          if(sa&&!(sa.includes('1899')||sa.includes('T')))rec.savedAt=sa;
+          if(phn>0)rec.phones=phn;
+        });
+        if(!rec.phones&&prev)rec.phones=prev.phones||0;
+        db[date]=rec;touched++;
+      });
+
+      saveDB(db);
+      try{localStorage.setItem('att_last_sync',String(Date.now()))}catch(e){}
+      renderChips();loadCurDate();
+      if(manual)toast(staffChanged?'Synced! Staff list bhi update hui ('+STAFF.length+' naam)':(touched?'Synced!':'Sab already up to date'));
+      else if(staffChanged)toast('Staff list update hui');
     }catch(e){if(manual)toast('Sync error')}
   };
   const sc=document.createElement('script');
@@ -982,7 +1023,9 @@ loadCurDate();
 setTimeout(function(){
   if(!navigator.onLine)return;
   const db=getDB();
-  if(db[ts])return;
+  const last=parseInt(localStorage.getItem('att_last_sync')||'0')||0;
+  /* aaj ka record hai aur 3 ghante se kam purana sync hai to skip */
+  if(db[ts]&&(Date.now()-last)<3*3600*1000)return;
   syncFromSheets(false);
 },1200);
 
