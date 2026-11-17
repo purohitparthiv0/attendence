@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Staff Attendance</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#16a34a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;padding-bottom:130px}
+.topbar{background:#fff;border-bottom:1px solid #e5e5e5;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar h1{font-size:16px;font-weight:700}
+.topbar .dt{font-size:11px;color:#888;margin-top:2px}
+.top-right{display:flex;gap:6px;align-items:center}
+.date-btn{padding:6px 10px;border:2px solid #16a34a;border-radius:8px;font-size:12px;font-weight:700;color:#16a34a;background:#fff;cursor:pointer;white-space:nowrap}
+.icon-btn{width:38px;height:38px;border-radius:8px;border:1px solid #e5e5e5;background:#fff;cursor:pointer;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sync-btn{background:#f0fdf4;border-color:#86efac;color:#16a34a}
+.rep-btn2{background:#fff;border-color:#e5e5e5;color:#1a1a1a}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 14px;background:#fff;border-bottom:1px solid #e5e5e5}
+.stat{text-align:center;border-radius:8px;padding:2px 0;border:1.5px solid transparent;cursor:pointer}
+.stat.on{border-color:#16a34a;background:#f0fdf4}
+.stat-n{font-size:20px;font-weight:700}
+.stat-l{font-size:9.5px;color:#888;margin-top:1px;text-transform:uppercase;font-weight:600}
+.np{color:#16a34a}.na{color:#dc2626}.nl{color:#d97706}.nh{color:#2563eb}.nph{color:#7c3aed}
+.legend{display:flex;gap:6px;padding:8px 14px;background:#fafafa;border-bottom:1px solid #e5e5e5;flex-wrap:wrap}
+.leg{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.lp{background:#dcfce7;color:#166534}.la{background:#fee2e2;color:#991b1b}.ll{background:#fef3c7;color:#92400e}.lh{background:#dbeafe;color:#1e40af}
+.edit-banner{display:none;background:#fef3c7;color:#92400e;padding:8px 14px;font-size:13px;font-weight:700;border-bottom:1px solid #fcd34d;text-align:center}
+.info-banner{display:none;background:#f0fdf4;color:#166534;padding:7px 14px;font-size:12.5px;font-weight:600;border-bottom:1px solid #bbf7d0;text-align:center}
+.controls{padding:10px 14px 8px;background:#fff;border-bottom:1px solid #f0f0f0;display:flex;gap:8px;align-items:center}
+.controls input{flex:1;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;background:#fafafa}
+.controls input:focus{border-color:#16a34a}
+.mab{padding:9px 11px;border:1px solid #ddd;border-radius:8px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#1a1a1a;white-space:nowrap;-webkit-appearance:none}
+.mab:disabled{opacity:.4}
+.chiprow{display:flex;gap:6px;padding:0 14px 10px;background:#fff;border-bottom:1px solid #e5e5e5;overflow-x:auto;scrollbar-width:none}
+.chiprow::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;padding:6px 12px;border:1px solid #e0e0e0;border-radius:20px;background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#666;-webkit-appearance:none}
+.chip.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.staff-list{padding:10px 14px}
+.sc{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid #e8e8e8;border-radius:12px;padding:10px 12px;margin-bottom:6px}
+.sc.mk-P{border-color:#86efac;background:#f0fdf4}
+.sc.mk-A{border-color:#fca5a5;background:#fff5f5}
+.sc.mk-L{border-color:#fcd34d;background:#fffbeb}
+.sc.mk-H{border-color:#93c5fd;background:#eff6ff}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.si{flex:1;min-width:0}
+.sn{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sd{font-size:11px;color:#888;margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.phchip{border:1px solid #e0e0e0;background:#fafafa;color:#aaa;border-radius:20px;padding:2px 8px;font-size:10.5px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.phchip.on{background:#f3e8ff;border-color:#d8b4fe;color:#6b21a8}
+.phchip:disabled{opacity:.35}
+.lt{font-size:11px;color:#d97706;margin-top:3px;font-weight:700;cursor:pointer;display:inline-block;border-bottom:1px dashed #d97706}
+.bg{display:flex;gap:4px;flex-shrink:0}
+.ab{width:33px;height:34px;border-radius:8px;border:1.5px solid #e0e0e0;background:#fafafa;cursor:pointer;font-size:12px;font-weight:700;color:#aaa;display:flex;align-items:center;justify-content:center;-webkit-appearance:none}
+.ab.sP{background:#16a34a;border-color:#16a34a;color:#fff}
+.ab.sA{background:#dc2626;border-color:#dc2626;color:#fff}
+.ab.sL{background:#d97706;border-color:#d97706;color:#fff}
+.ab.sH{background:#2563eb;border-color:#2563eb;color:#fff}
+.bot{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e5e5;padding:8px 14px 12px;z-index:10}
+.warn{font-size:12px;color:#dc2626;font-weight:700;text-align:center;display:none;padding:3px 0 5px}
+.ph-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f0f0;margin-bottom:6px}
+.ph-label{font-size:13px;font-weight:700}
+.ph-label b{color:#7c3aed;font-size:15px}
+.ph-all{padding:7px 12px;border:2px solid #7c3aed;border-radius:8px;background:#fff;color:#7c3aed;font-size:12px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.btn-row{display:flex;gap:8px}
+.save-btn{flex:1;padding:13px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.save-btn:active{background:#15803d}
+.hist-btn{padding:13px 16px;background:#f0f0f0;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#1a1a1a;-webkit-appearance:none;white-space:nowrap}
+/* MODALS */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;justify-content:flex-end;flex-direction:column}
+.sheet{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.shead{position:sticky;top:0;background:#fff;z-index:5;border-radius:20px 20px 0 0}
+.handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 10px}
+.mh{padding:0 14px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:10px}
+.mh h2{font-size:17px;font-weight:700;flex:1;min-width:0}
+.xb{width:36px;height:36px;border-radius:50%;background:#f0f0f0;border:none;font-size:15px;font-weight:700;color:#555;cursor:pointer;flex-shrink:0;-webkit-appearance:none}
+.xb:active{background:#e0e0e0}
+.bk{width:36px;height:36px;border-radius:50%;background:#f0fdf4;border:none;font-size:16px;font-weight:700;color:#16a34a;cursor:pointer;flex-shrink:0;-webkit-appearance:none}
+.mb{padding:12px 16px}
+.close-btn{display:block;width:calc(100% - 32px);margin:8px 16px 16px;padding:13px;background:#f0f0f0;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;text-align:center;-webkit-appearance:none}
+.rc{background:#fafafa;border:1px solid #e8e8e8;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.rc:active{background:#f0f0f0}
+.rc-title{font-size:14px;font-weight:700}
+.rc-sub{font-size:12px;color:#888;margin-top:3px}
+.pills{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.pill{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700}
+.pp{background:#dcfce7;color:#166534}.pa{background:#fee2e2;color:#991b1b}.pl{background:#fef3c7;color:#92400e}.ph2{background:#dbeafe;color:#1e40af}
+.tabs{display:flex;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:14px}
+.tab{flex:1;padding:10px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;background:#fff;border:none;color:#888;-webkit-appearance:none}
+.tab.active{background:#16a34a;color:#fff}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px}
+.sb{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:8px 4px;text-align:center}
+.sb-n{font-size:20px;font-weight:700}
+.sb-l{font-size:10px;color:#888;margin-top:2px;text-transform:uppercase;font-weight:600}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:8px;background:#f5f5f5;color:#666;font-size:11px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #eee}
+.tbl td{padding:7px 8px;border-bottom:1px solid #f5f5f5;vertical-align:middle}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.bP{background:#dcfce7;color:#166534}.bA{background:#fee2e2;color:#991b1b}.bL{background:#fef3c7;color:#92400e}.bH{background:#dbeafe;color:#1e40af}.bX{background:#f5f5f5;color:#aaa}
+.action-btn{display:block;width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:8px;-webkit-appearance:none}
+.wa-btn{background:#25D366;color:#fff}
+.wa-btn2{background:#fff;color:#166534;border:2px solid #25D366}
+.pdf-btn{background:#1e40af;color:#fff}
+.back-btn2{background:#f0f0f0;color:#1a1a1a}
+.month-dl-btn{padding:8px 14px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;display:block;width:100%;-webkit-appearance:none}
+.empty{text-align:center;padding:32px;color:#aaa;font-size:14px}
+.pop-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center}
+.pop-box{background:#fff;border-radius:16px;padding:22px;width:86%;max-width:320px;text-align:center}
+.pop-box h3{font-size:16px;font-weight:700;margin-bottom:6px}
+.pop-box p{font-size:13px;color:#888;margin-bottom:14px}
+.pop-inp{width:100%;padding:12px;border:2px solid #ddd;border-radius:8px;font-size:22px;font-weight:700;text-align:center;outline:none;-webkit-appearance:none}
+.pop-inp:focus{border-color:#d97706}
+.presets{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.preset{padding:6px 11px;border:1px solid #fcd34d;background:#fffbeb;color:#92400e;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.pop-btns{display:flex;gap:8px;margin-top:14px}
+.pop-btns button{flex:1;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.pop-ok{background:#d97706;color:#fff}
+.pop-no{background:#f0f0f0;color:#1a1a1a}
+/* staff manager */
+.fld{width:100%;padding:11px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;background:#fafafa;margin-bottom:8px;font-family:inherit}
+.fld:focus{border-color:#16a34a}
+.lab{display:block;font-size:11px;color:#888;font-weight:700;text-transform:uppercase;margin:14px 0 6px}
+.add-btn{width:100%;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.sec-btn{width:100%;padding:12px;background:#f0f0f0;color:#1a1a1a;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;-webkit-appearance:none}
+.mrow{display:flex;align-items:center;gap:9px;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:8px 8px 8px 11px;margin-bottom:6px}
+.mrow .si{flex:1}
+.mini{width:34px;height:34px;border-radius:8px;border:none;font-size:14px;cursor:pointer;flex-shrink:0;-webkit-appearance:none}
+.edt{background:#eff6ff;color:#2563eb}
+.del{background:#fee2e2;color:#dc2626}
+.note{font-size:12px;color:#888;line-height:1.5;margin-top:10px}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 22px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;max-width:88vw;text-align:center}
+.toast.show{opacity:1}
+.loadbar{position:fixed;top:0;left:0;right:0;height:3px;background:#16a34a;z-index:9999;display:none;animation:lb 1s infinite}
+@keyframes lb{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+</style>
+</head>
+<body>
+<div class="loadbar" id="loadbar"></div>
+
+<div class="topbar">
+  <div>
+    <h1>&#128197; Attendance</h1>
+    <div class="dt" id="dtLabel"></div>
+  </div>
+  <div class="top-right">
+    <input type="date" id="datePicker" class="date-btn" onchange="changeDate(this.value)" style="-webkit-appearance:none;outline:none">
+    <button class="icon-btn" id="installBtn" style="display:none;background:#f0fdf4;border-color:#86efac;color:#16a34a" onclick="doInstall()" title="Install">&#11015;</button>
+    <button class="icon-btn" onclick="openStaffMgr()" title="Staff">&#128101;</button>
+    <button class="icon-btn sync-btn" onclick="syncFromSheets(true)" title="Sync">&#x21bb;</button>
+    <button class="icon-btn rep-btn2" onclick="openReports()" title="Reports">&#128203;</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat" onclick="setFilter('P')" id="st-P"><div class="stat-n np" id="cP">0</div><div class="stat-l">Present</div></div>
+  <div class="stat" onclick="setFilter('A')" id="st-A"><div class="stat-n na" id="cA">0</div><div class="stat-l">Absent</div></div>
+  <div class="stat" onclick="setFilter('L')" id="st-L"><div class="stat-n nl" id="cL">0</div><div class="stat-l">Late</div></div>
+  <div class="stat" onclick="setFilter('H')" id="st-H"><div class="stat-n nh" id="cH">0</div><div class="stat-l">Half</div></div>
+  <div class="stat" onclick="setFilter('X')" id="st-X"><div class="stat-n nph" id="cX">0</div><div class="stat-l">Phone</div></div>
+</div>
+
+<div class="legend">
+  <span class="leg lp">P = Present</span>
+  <span class="leg la">A = Absent</span>
+  <span class="leg ll">L = Late</span>
+  <span class="leg lh">H = Half-day</span>
+</div>
+
+<div class="edit-banner" id="editBanner"></div>
+<div class="info-banner" id="infoBanner"></div>
+
+<div class="controls">
+  <input type="text" id="srch" placeholder="Search name or dept..." oninput="renderGrid()">
+  <button class="mab" onclick="markAll('P')">All P</button>
+  <button class="mab" id="undoBtn" onclick="doUndo()" disabled>&#8630;</button>
+</div>
+<div class="chiprow" id="deptChips"></div>
+
+<div class="staff-list" id="grid"></div>
+
+<div class="bot">
+  <div class="warn" id="warnMsg"></div>
+  <div class="ph-row">
+    <span class="ph-label">&#128241; Phone jama &nbsp;<b id="phCount">0/0</b></span>
+    <button class="ph-all" onclick="allPhones()">Sab jama</button>
+  </div>
+  <div class="btn-row">
+    <button class="save-btn" onclick="doSave()">&#10003; Save Attendance</button>
+    <button class="hist-btn" onclick="openReports()">&#128203; Reports</button>
+  </div>
+</div>
+
+<!-- Late Popup -->
+<div class="pop-ov" id="latePop" onclick="if(event.target===this)cancelLate()">
+  <div class="pop-box">
+    <h3>&#9200; Late Entry</h3>
+    <p id="lateFor">Entry time?</p>
+    <input class="pop-inp" type="time" id="lateInp">
+    <div class="presets" id="presets"></div>
+    <div class="pop-btns">
+      <button class="pop-no" onclick="cancelLate()">Cancel</button>
+      <button class="pop-ok" onclick="confirmLate()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Manager -->
+<div class="ov" id="staffMod" onclick="if(event.target===this)closeM('staffMod')">
+  <div class="sheet">
+    <div class="shead">
+      <div class="handle"></div>
+      <div class="mh"><h2>&#128101; Staff List</h2><button class="xb" onclick="closeM('staffMod')">&#10005;</button></div>
+    </div>
+    <div class="mb">
+      <label class="lab">Naya staff add karo</label>
+      <input class="fld" id="nName" placeholder="Naam" autocomplete="off">
+      <input class="fld" id="nDept" placeholder="Department" list="dList" autocomplete="off">
+      <datalist id="dList"></datalist>
+      <button class="add-btn" onclick="addStaff()">+ Add staff</button>
+
+      <label class="lab">Ek saath kai (har line: Naam, Dept)</label>
+      <textarea class="fld" id="bulk" rows="3" placeholder="RAKESH, TOWEL&#10;SUNIL, SOFA"></textarea>
+      <button class="sec-btn" onclick="bulkAdd()">Bulk add</button>
+
+      <label class="lab">Abhi list mein — <span id="sCount">0</span></label>
+      <div id="mgrList"></div>
+
+      <label class="lab">Backup</label>
+      <button class="sec-btn" onclick="exportBackup()">Export backup file</button>
+      <button class="sec-btn" style="margin-top:8px" onclick="document.getElementById('impFile').click()">Import backup file</button>
+      <input type="file" id="impFile" accept=".json" style="display:none" onchange="importBackup(event)">
+      <p class="note">Staff hatane par purane mahine ke record mein uska naam rehta hai, sirf aaj se aage list mein nahi aayega.</p>
+    </div>
+    <button class="close-btn" onclick="closeM('staffMod')">Close</button>
+  </div>
+</div>
+
+<!-- Reports Modal -->
+<div class="ov" id="repMod" onclick="if(event.target===this)closeM('repMod')">
+  <div class="sheet">
+    <div class="shead">
+      <div class="handle"></div>
+      <div class="mh"><h2>&#128203; Reports</h2><button class="xb" onclick="closeM('repMod')">&#10005;</button></div>
+    </div>
+    <div class="mb">
+      <div class="tabs">
+        <button class="tab active" id="tab-day" onclick="switchTab('day')">Day Wise</button>
+        <button class="tab" id="tab-month" onclick="switchTab('month')">Monthly</button>
+      </div>
+      <div id="tab-day-content"></div>
+      <div id="tab-month-content" style="display:none"></div>
+    </div>
+    <button class="close-btn" onclick="closeM('repMod')">Close</button>
+  </div>
+</div>
+
+<!-- Day Detail Modal -->
+<div class="ov" id="dayMod" onclick="if(event.target===this)closeM('dayMod')">
+  <div class="sheet">
+    <div class="shead">
+      <div class="handle"></div>
+      <div class="mh">
+        <button class="bk" onclick="backToReports()">&#8592;</button>
+        <h2 id="dayTitle"></h2>
+        <button class="xb" onclick="closeM('dayMod')">&#10005;</button>
+      </div>
+    </div>
+    <div class="mb">
+      <div class="sg" id="daySummary"></div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>Name</th><th>Dept</th><th>St</th><th>Time</th><th>&#128241;</th></tr></thead>
+        <tbody id="dayTable"></tbody>
+      </table>
+      <br>
+      <button class="action-btn wa-btn" onclick="waDay('short')">&#128241; WhatsApp — short</button>
+      <button class="action-btn wa-btn2" onclick="waDay('full')">&#128241; WhatsApp — poori list</button>
+      <button class="action-btn pdf-btn" onclick="pdfDay()">Download Day PDF</button>
+      <button class="action-btn back-btn2" onclick="backToReports()">&#8592; Back to Reports</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbznNrIwFbFFA8oXygdQOXx_uI4V-nglrg5B5bSoSJgN8jbz9_S3y0jtdobfhL9dDV6r/exec';
+const LS='att_v4';
+const LS_STAFF='att_staff_v1';
+
+const SEED=[
+  {id:1,name:"VIJAY",dept:"COMPUTER"},{id:2,name:"LUNSINGH",dept:"DOORMAT"},
+  {id:3,name:"RANJIT",dept:"D/B"},{id:4,name:"NIRANJAN",dept:"D/B"},
+  {id:5,name:"PRITESH",dept:"D/B"},{id:6,name:"PREM",dept:"D/B"},
+  {id:7,name:"SAURABH",dept:"D/B"},{id:8,name:"AKHILESH",dept:"D/B"},
+  {id:9,name:"JATIN",dept:"S/B"},{id:10,name:"SANKET",dept:"S/B"},
+  {id:11,name:"MAHESH",dept:"S/B"},{id:12,name:"ASHOK",dept:"TOWEL"},
+  {id:13,name:"NILESH",dept:"TOWEL"},{id:14,name:"AKUL",dept:"TOWEL"},
+  {id:15,name:"MAHESH",dept:"C/C"},{id:16,name:"SHAKTI",dept:"C/C"},
+  {id:17,name:"NARESH",dept:"C/C"},{id:18,name:"RAMBHAI",dept:"CURTAINS"},
+  {id:19,name:"JIGAR",dept:"CURTAINS"},{id:20,name:"RAJU",dept:"CURTAINS"},
+  {id:21,name:"NARENDRA",dept:"CURTAINS"},{id:22,name:"BHARAT",dept:"CURTAINS"},
+  {id:23,name:"MANOHAR",dept:"CURTAINS"},{id:24,name:"JAY",dept:"SOFA"},
+  {id:25,name:"TIRTH",dept:"SOFA"},{id:26,name:"VEERPAL",dept:"SOFA"},
+  {id:27,name:"RAJ",dept:"CURTAINS"},{id:28,name:"DINESH",dept:"CURTAINS"},
+  {id:29,name:"KANIYALAL",dept:"LIFTMAN"},{id:30,name:"AJAY",dept:"TAILOR"},
+  {id:31,name:"VEERSINGH",dept:"TAILOR"},{id:32,name:"VINODJI",dept:"D/B"}
+];
+const PAL=[["#dcfce7","#166534"],["#fef3c7","#92400e"],["#dbeafe","#1e40af"],
+           ["#fee2e2","#991b1b"],["#f3e8ff","#6b21a8"],["#fce7f3","#9d174d"]];
+
+let STAFF=[];
+let att={},late={},ph={},pendingLateId=null,viewDayKey=null,curTab='day';
+let editConfirmed=false,selDate=null,filter=null,deptFilter=null,undoStack=[];
+
+/* ── helpers ── */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function getDB(){try{const r=localStorage.getItem(LS);return r?JSON.parse(r):{}}catch(e){return {}}}
+function saveDB(db){try{localStorage.setItem(LS,JSON.stringify(db))}catch(e){toast('Storage full / band hai')}}
+/* FIX: local date, not UTC — warna subah 5:30 se pehle pichhli date aati thi */
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function curKey(){return selDate||todayStr()}
+function isToday(){return curKey()===todayStr()}
+function fmtKey(k){return new Date(k+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+function fmtTimeNow(){return new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})}
+function hhmm(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+/* FIX: khali word par crash nahi hoga */
+function ini(n){const w=String(n).trim().split(/\s+/).filter(Boolean);return (w.map(x=>x[0]).join('')||'?').slice(0,2).toUpperCase()}
+function av(id){return PAL[(id-1)%PAL.length]}
+function setLoad(v){document.getElementById('loadbar').style.display=v?'block':'none'}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2500)}
+/* modal stack: X, backdrop tap, aur phone ka back button — teeno se band hota hai */
+let mStack=[],histDepth=0,skipPop=false;
+function openM(id){
+  document.getElementById(id).style.display='flex';
+  document.body.style.overflow='hidden';
+  mStack.push(id);
+  try{history.pushState({m:mStack.length},'');histDepth++}catch(e){}
+}
+function hideTop(){
+  const id=mStack.pop();
+  if(id)document.getElementById(id).style.display='none';
+  if(!mStack.length)document.body.style.overflow='';
+}
+/* turant band karo — history.back() ka intezaar mat karo */
+function closeM(id){
+  const i=mStack.lastIndexOf(id);
+  if(i>-1)mStack.splice(i,1);
+  const el=document.getElementById(id);
+  if(el)el.style.display='none';
+  if(!mStack.length)document.body.style.overflow='';
+  if(histDepth>0){histDepth--;skipPop=true;try{history.back()}catch(e){skipPop=false}}
+}
+/* ek modal se doosre mein jao bina history entry badhaye */
+function swapM(from,to){
+  document.getElementById(from).style.display='none';
+  document.getElementById(to).style.display='flex';
+  if(mStack.length)mStack[mStack.length-1]=to;else mStack.push(to);
+}
+window.addEventListener('popstate',function(){
+  if(skipPop){skipPop=false;return}
+  if(histDepth>0)histDepth--;
+  if(mStack.length)hideTop();
+});
+
+/* ── staff store ── */
+function loadStaff(){
+  try{const r=localStorage.getItem(LS_STAFF);STAFF=r?JSON.parse(r):SEED.slice()}
+  catch(e){STAFF=SEED.slice()}
+  if(!Array.isArray(STAFF)||!STAFF.length)STAFF=SEED.slice();
+}
+function saveStaff(){try{localStorage.setItem(LS_STAFF,JSON.stringify(STAFF))}catch(e){}}
+function nextId(){return STAFF.reduce((m,s)=>Math.max(m,s.id),0)+1}
+function depts(){const o=[];STAFF.forEach(s=>{if(o.indexOf(s.dept)<0)o.push(s.dept)});return o.sort()}
+function sName(id){const s=STAFF.find(x=>x.id===id);return s?s.name:'(hataya hua)'}
+function sDept(id){const s=STAFF.find(x=>x.id===id);return s?s.dept:'—'}
+
+/* ── date ── */
+function changeDate(v){
+  selDate=v;editConfirmed=false;filter=null;deptFilter=null;undoStack=[];
+  document.getElementById('srch').value='';
+  document.getElementById('dtLabel').textContent=fmtKey(v);
+  const b=document.getElementById('editBanner');
+  if(!isToday()){b.style.display='block';b.textContent='Editing: '+fmtKey(v)}
+  else b.style.display='none';
+  loadCurDate();
+}
+
+/* SPEED: nayi date par sab apne aap Present — sirf exception badalna padta hai */
+function loadCurDate(){
+  const db=getDB(),k=curKey(),info=document.getElementById('infoBanner');
+  if(db[k]){
+    att={...db[k].att};late={...db[k].late};ph={...(db[k].ph||{})};
+    info.style.display='block';
+    info.textContent='Ye din pehle save ho chuka hai — badloge to dobara Save dabana';
+  }else{
+    att={};late={};ph={};
+    STAFF.forEach(s=>{att[s.id]='P'});
+    info.style.display='block';
+    info.textContent='Sab Present set hain — sirf absent / late waale badlo';
+  }
+  undoStack=[];document.getElementById('undoBtn').disabled=true;
+  renderStats();renderGrid();
+}
+
+/* ── undo ── */
+function snap(){
+  undoStack.push(JSON.stringify({att,late,ph}));
+  if(undoStack.length>30)undoStack.shift();
+  document.getElementById('undoBtn').disabled=false;
+}
+function doUndo(){
+  if(!undoStack.length)return;
+  const s=JSON.parse(undoStack.pop());
+  att=s.att;late=s.late;ph=s.ph;
+  document.getElementById('undoBtn').disabled=!undoStack.length;
+  renderStats();renderGrid();
+}
+
+/* ── render ── */
+function phCount(){let n=0;STAFF.forEach(s=>{if(ph[s.id]&&att[s.id]!=='A')n++});return n}
+function renderStats(){
+  const c={P:0,A:0,L:0,H:0};
+  STAFF.forEach(s=>{const v=att[s.id];if(c[v]!==undefined)c[v]++});
+  ['P','A','L','H'].forEach(k=>document.getElementById('c'+k).textContent=c[k]);
+  const pc=phCount(),elig=STAFF.filter(s=>att[s.id]!=='A').length;
+  document.getElementById('cX').textContent=pc;
+  document.getElementById('phCount').textContent=pc+'/'+elig;
+  ['P','A','L','H','X'].forEach(k=>document.getElementById('st-'+k).classList.toggle('on',filter===k));
+}
+/* chips sirf tab banti hain jab dept/filter badle — har tap par nahi */
+function renderChips(){
+  const ds=depts();
+  document.getElementById('deptChips').innerHTML=
+    '<button class="chip'+(deptFilter?'':' on')+'" onclick="setDept(null)">Sab</button>'+
+    ds.map(d=>'<button class="chip'+(deptFilter===d?' on':'')+'" onclick="setDept(\''+esc(d).replace(/'/g,"\\'")+'\')">'+esc(d)+'</button>').join('');
+}
+function setFilter(f){filter=filter===f?null:f;renderStats();renderGrid()}
+function setDept(d){deptFilter=d;renderChips();renderGrid()}
+
+function cardHTML(s){
+  const st=att[s.id]||'',lt=late[s.id]||'',a=av(s.id),isA=st==='A';
+  return `<div class="sc${st?' mk-'+st:''}" data-id="${s.id}">
+      <div class="av" style="background:${a[0]};color:${a[1]}">${esc(ini(s.name))}</div>
+      <div class="si">
+        <div class="sn">${esc(s.name)}</div>
+        <div class="sd"><span>${esc(s.dept)}</span>
+          <button class="phchip${ph[s.id]&&!isA?' on':''}" ${isA?'disabled':''} onclick="togPhone(${s.id})">&#128241; ${ph[s.id]&&!isA?'jama':'nahi'}</button>
+        </div>
+        ${st==='L'?`<div class="lt" onclick="mark(${s.id},'L',1)">&#9200; ${esc(lt||'time daalo')}</div>`:''}
+      </div>
+      <div class="bg">
+        <button class="ab${st==='P'?' sP':''}" onclick="mark(${s.id},'P')">P</button>
+        <button class="ab${st==='A'?' sA':''}" onclick="mark(${s.id},'A')">A</button>
+        <button class="ab${st==='L'?' sL':''}" onclick="mark(${s.id},'L')">L</button>
+        <button class="ab${st==='H'?' sH':''}" onclick="mark(${s.id},'H')">H</button>
+      </div>
+    </div>`;
+}
+/* SPEED: ek tap = sirf ek card dobara banta hai, poori list nahi */
+function refreshCard(id){
+  if(filter||deptFilter){renderGrid();return}
+  const el=document.querySelector('.sc[data-id="'+id+'"]');
+  if(!el){renderGrid();return}
+  const s=STAFF.find(x=>x.id===id);
+  if(!s){renderGrid();return}
+  const t=document.createElement('div');
+  t.innerHTML=cardHTML(s);
+  el.replaceWith(t.firstElementChild);
+}
+
+function renderGrid(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  const list=STAFF.filter(s=>{
+    if(q&&!(s.name.toLowerCase().includes(q)||s.dept.toLowerCase().includes(q)))return false;
+    if(deptFilter&&s.dept!==deptFilter)return false;
+    if(filter==='X')return !!ph[s.id]&&att[s.id]!=='A';
+    if(filter&&att[s.id]!==filter)return false;
+    return true;
+  });
+  const el=document.getElementById('grid');
+  if(!STAFF.length){el.innerHTML='<div class="empty">Koi staff nahi hai.<br>Upar &#128101; dabao aur add karo.</div>';return}
+  if(!list.length){el.innerHTML='<div class="empty">Koi match nahi mila</div>';return}
+  el.innerHTML=list.map(cardHTML).join('');
+}
+
+/* ── marking ── */
+function mark(id,st,forceEditTime){
+  if(st==='L'){
+    /* FIX: L par dobara tap karne se status udta nahi — time edit khulta hai */
+    if(att[id]==='L'&&!forceEditTime&&late[id]){openLate(id);return}
+    openLate(id);return;
+  }
+  snap();
+  att[id]=st;
+  delete late[id];
+  if(st==='A')ph[id]=false;
+  renderStats();refreshCard(id);
+}
+function openLate(id){
+  pendingLateId=id;
+  document.getElementById('lateFor').textContent=sName(id)+' — entry time?';
+  document.getElementById('lateInp').value=late[id]||hhmm();
+  document.getElementById('presets').innerHTML=
+    ['10:15','10:30','10:45','11:00','11:30','12:00']
+      .map(t=>'<button class="preset" onclick="document.getElementById(\'lateInp\').value=\''+t+'\'">'+t+'</button>').join('');
+  openM('latePop');
+}
+function confirmLate(){
+  const t=document.getElementById('lateInp').value.trim()||hhmm();
+  snap();
+  att[pendingLateId]='L';late[pendingLateId]=t;
+  const id=pendingLateId;
+  pendingLateId=null;closeM('latePop');renderStats();refreshCard(id);
+}
+function cancelLate(){pendingLateId=null;closeM('latePop')}
+function markAll(s){snap();STAFF.forEach(x=>{att[x.id]=s;delete late[x.id]});renderStats();renderGrid();toast('Sab '+s+' mark ho gaye')}
+function togPhone(id){if(att[id]==='A')return;snap();ph[id]=!ph[id];renderStats();refreshCard(id)}
+function allPhones(){snap();STAFF.forEach(s=>{if(att[s.id]!=='A')ph[s.id]=true});renderStats();renderGrid();toast('Sab ke phone jama')}
+
+/* ── staff manager ── */
+function openStaffMgr(){renderMgr();openM('staffMod')}
+function renderMgr(){
+  document.getElementById('sCount').textContent=STAFF.length;
+  document.getElementById('dList').innerHTML=depts().map(d=>'<option value="'+esc(d)+'">').join('');
+  const el=document.getElementById('mgrList');
+  if(!STAFF.length){el.innerHTML='<div class="empty">List khali hai</div>';return}
+  el.innerHTML=STAFF.slice().sort((a,b)=>a.dept.localeCompare(b.dept)||a.name.localeCompare(b.name))
+    .map(s=>{const a=av(s.id);return`<div class="mrow">
+      <div class="av" style="background:${a[0]};color:${a[1]}">${esc(ini(s.name))}</div>
+      <div class="si"><div class="sn">${esc(s.name)}</div><div class="sd">${esc(s.dept)}</div></div>
+      <button class="mini edt" onclick="editStaff(${s.id})">&#9998;</button>
+      <button class="mini del" onclick="delStaff(${s.id})">&#128465;</button>
+    </div>`}).join('');
+}
+function addStaff(){
+  const n=document.getElementById('nName').value.trim().toUpperCase();
+  const d=(document.getElementById('nDept').value.trim()||'OTHER').toUpperCase();
+  if(!n){toast('Naam likho');return}
+  STAFF.push({id:nextId(),name:n,dept:d});saveStaff();
+  document.getElementById('nName').value='';
+  att[STAFF[STAFF.length-1].id]='P';
+  renderMgr();renderChips();renderStats();renderGrid();toast(n+' add ho gaya');
+}
+function bulkAdd(){
+  const lines=document.getElementById('bulk').value.split('\n');let n=0;
+  lines.forEach(l=>{
+    l=l.trim();if(!l)return;
+    const p=l.split(',');const nm=p[0].trim().toUpperCase();if(!nm)return;
+    const dp=(p.length>1?p.slice(1).join(',').trim():'')||'OTHER';
+    const id=nextId();STAFF.push({id,name:nm,dept:dp.toUpperCase()});att[id]='P';n++;
+  });
+  if(!n){toast('Kuch add nahi hua');return}
+  saveStaff();document.getElementById('bulk').value='';
+  renderMgr();renderChips();renderStats();renderGrid();toast(n+' staff add ho gaye');
+}
+function editStaff(id){
+  const s=STAFF.find(x=>x.id===id);if(!s)return;
+  const n=prompt('Naam:',s.name);if(n===null)return;
+  const d=prompt('Department:',s.dept);if(d===null)return;
+  s.name=n.trim().toUpperCase()||s.name;s.dept=d.trim().toUpperCase()||s.dept;
+  saveStaff();renderMgr();renderChips();renderGrid();toast('Update ho gaya');
+}
+function delStaff(id){
+  const s=STAFF.find(x=>x.id===id);if(!s)return;
+  if(!confirm(s.name+' ko list se hata dein?\n\nPurane record mein naam rahega.'))return;
+  STAFF=STAFF.filter(x=>x.id!==id);saveStaff();
+  delete att[id];delete late[id];delete ph[id];
+  renderMgr();renderChips();renderStats();renderGrid();toast(s.name+' hata diya');
+}
+
+/* ── backup ── */
+function dl(name,content,type){
+  const b=new Blob([content],{type});const a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},600);
+}
+function exportBackup(){
+  dl('attendance-backup-'+todayStr()+'.json',
+     JSON.stringify({staff:STAFF,db:getDB()},null,2),'application/json');
+  toast('Backup download ho gaya');
+}
+function importBackup(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const d=JSON.parse(fr.result);
+      if(!d.staff||!d.db)throw 0;
+      if(!confirm('Abhi ka saara data replace ho jayega. Aage badhein?'))return;
+      STAFF=d.staff;saveStaff();saveDB(d.db);
+      loadCurDate();renderChips();renderMgr();toast('Backup import ho gaya');
+    }catch(e){alert('Ye file padhi nahi ja rahi. Sahi backup file chuno.')}
+  };
+  fr.readAsText(f);ev.target.value='';
+}
+
+/* ── save ── */
+async function doSave(){
+  if(!STAFF.length){toast('Pehle staff add karo');return}
+  const unm=STAFF.filter(s=>!att[s.id]);
+  if(unm.length){
+    const w=document.getElementById('warnMsg');
+    w.style.display='block';
+    w.textContent=unm.length+' unmarked: '+unm.slice(0,3).map(s=>s.name).join(', ')+(unm.length>3?'...':'');
+    filter=null;deptFilter=null;document.getElementById('srch').value='';
+    renderStats();renderGrid();
+    setTimeout(()=>{w.style.display='none'},4000);
+    return;
+  }
+  const k=curKey(),db=getDB();
+  if(db[k]&&!editConfirmed){
+    const w=document.getElementById('warnMsg');
+    w.style.display='block';
+    w.innerHTML='Pehle se saved hai! <button onclick="forceEdit()" style="background:#dc2626;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">Save Anyway</button>';
+    return;
+  }
+  editConfirmed=false;
+  const savedAt=fmtTimeNow(),phTotal=phCount();
+  db[k]={date:k,label:fmtKey(k),savedAt,att:{...att},late:{...late},ph:{...ph},phones:phTotal};
+  saveDB(db);
+  document.getElementById('warnMsg').style.display='none';
+  const c={P:0,A:0};STAFF.forEach(s=>{if(c[att[s.id]]!==undefined)c[att[s.id]]++});
+  toast('Saved — '+c.P+' present, '+c.A+' absent');
+  setLoad(true);
+  let sent=true;
+  try{
+    if(!navigator.onLine)throw new Error('offline');
+    const records=STAFF.map(s=>({date:k,staffId:s.id,name:s.name,dept:s.dept,
+      status:att[s.id]||'',lateTime:late[s.id]||'',phone:ph[s.id]?'Y':'N',savedAt,phones:phTotal}));
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'save',records,phones:phTotal,date:k})});
+  }catch(e){sent=false}
+  setLoad(false);
+  if(!sent)toast('Phone mein save hua, par Sheet mein NAHI gaya — internet check karke dobara Save dabao');
+}
+function forceEdit(){editConfirmed=true;document.getElementById('warnMsg').style.display='none';doSave()}
+
+/* ── sync ──
+   Sheet hi asli record hai.
+   ↻ (manual): Sheet ki har date phone mein naye sire se bharti hai aur staff list
+   Sheet ke sabse naye din se aati hai (naye/hataye hue staff bhi).
+   Page load (auto): sirf wo dates jo phone mein nahi hain + staff list. */
+function normDate(raw){
+  raw=String(raw==null?'':raw).trim();
+  if(!raw||raw==='DATE')return '';
+  let date=raw;
+  if(raw.includes('/')){
+    const p=raw.split('/');
+    if(p.length===3&&p[2].length===4)date=p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');
+  }else if(raw.includes('T')||raw.includes('Z')){
+    const d=new Date(raw);date=new Date(d.getTime()+19800000).toISOString().slice(0,10);
+  }else if(raw.length>10)date=raw.slice(0,10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date)?date:'';
+}
+function syncFromSheets(manual){
+  setLoad(true);
+  const old=document.getElementById('gs_sc');if(old)old.remove();
+  const cb='gscb'+Date.now();
+  const timer=setTimeout(()=>{
+    delete window[cb];const s=document.getElementById('gs_sc');if(s)s.remove();
+    setLoad(false);if(manual)toast('Sync timeout — internet check karo');
+  },12000);
+  window[cb]=function(json){
+    clearTimeout(timer);delete window[cb];
+    const s=document.getElementById('gs_sc');if(s)s.remove();
+    setLoad(false);
+    try{
+      if(!json||json.status!=='success'||!json.data||json.data.length<2){if(manual)toast('Sheet mein data nahi mila');return}
+      const rows=json.data.slice(1),db=getDB();
+      /* date -> {staffId -> row}; baad wali row jeetti hai */
+      const byDate={};
+      rows.forEach(row=>{
+        const date=normDate(row[0]);if(!date)return;
+        const id=parseInt(row[1]);if(!id)return;
+        (byDate[date]=byDate[date]||{})[id]=row;
+      });
+      const dates=Object.keys(byDate).sort();
+      if(!dates.length){if(manual)toast('Sheet mein data nahi mila');return}
+
+      /* 1) staff list — sabse naye din ki rows se */
+      let staffChanged=false;
+      const lastRows=byDate[dates[dates.length-1]];
+      const newStaff=Object.keys(lastRows).map(id=>{
+        const r=lastRows[id];
+        return {id:parseInt(id),name:String(r[2]||'').trim(),dept:String(r[3]||'').trim()};
+      }).filter(x=>x.name).sort((x,y)=>x.id-y.id);
+      const cur=JSON.stringify(STAFF.map(x=>({id:x.id,name:x.name,dept:x.dept})));
+      if(newStaff.length&&JSON.stringify(newStaff)!==cur){
+        try{localStorage.setItem('att_staff_prev',JSON.stringify(STAFF))}catch(e){}
+        STAFF=newStaff;saveStaff();staffChanged=true;
+        if(deptFilter&&depts().indexOf(deptFilter)<0)deptFilter=null;
+      }
+
+      /* 2) attendance records */
+      let touched=0;
+      dates.forEach(date=>{
+        if(!manual&&db[date])return;            // auto: local jeetega
+        const rs=byDate[date],prev=db[date];
+        const rec={date,label:fmtKey(date),savedAt:'',att:{},late:{},
+                   ph:(prev&&prev.ph)?prev.ph:{},phones:0};
+        Object.keys(rs).forEach(id=>{
+          const row=rs[id];
+          const status=String(row[4]||'').trim();
+          const rl=String(row[5]||'').trim();
+          const sa=String(row[6]||'').trim();
+          const phn=parseInt(row[7])||0;
+          if(status)rec.att[id]=status;
+          if(/^\d{1,2}:\d{2}$/.test(rl))rec.late[id]=rl;
+          else if(status==='L'&&prev&&prev.late&&prev.late[id])rec.late[id]=prev.late[id];
+          if(sa&&!(sa.includes('1899')||sa.includes('T')))rec.savedAt=sa;
+          if(phn>0)rec.phones=phn;
+        });
+        if(!rec.phones&&prev)rec.phones=prev.phones||0;
+        db[date]=rec;touched++;
+      });
+
+      saveDB(db);
+      try{localStorage.setItem('att_last_sync',String(Date.now()))}catch(e){}
+      renderChips();loadCurDate();
+      if(manual)toast(staffChanged?'Synced! Staff list bhi update hui ('+STAFF.length+' naam)':(touched?'Synced!':'Sab already up to date'));
+      else if(staffChanged)toast('Staff list update hui');
+    }catch(e){if(manual)toast('Sync error')}
+  };
+  const sc=document.createElement('script');
+  sc.id='gs_sc';sc.src=SCRIPT_URL+'?action=get&callback='+cb+'&t='+Date.now();
+  sc.onerror=()=>{clearTimeout(timer);delete window[cb];setLoad(false);if(manual)toast('Sync failed')};
+  document.head.appendChild(sc);
+}
+
+/* ── reports ── */
+function openReports(){switchTab(curTab);openM('repMod')}
+function switchTab(tab){
+  curTab=tab;
+  document.getElementById('tab-day').classList.toggle('active',tab==='day');
+  document.getElementById('tab-month').classList.toggle('active',tab==='month');
+  document.getElementById('tab-day-content').style.display=tab==='day'?'block':'none';
+  document.getElementById('tab-month-content').style.display=tab==='month'?'block':'none';
+  tab==='day'?renderDayList():renderMonthList();
+}
+function cleanSavedAt(s){if(!s)return '';const t=String(s);return (t.includes('1899')||t.includes('T')||t.length>20)?'':t}
+
+function renderDayList(){
+  const db=getDB(),keys=Object.keys(db).sort().reverse(),el=document.getElementById('tab-day-content');
+  if(!keys.length){el.innerHTML='<div class="empty">No records yet</div>';return}
+  el.innerHTML=keys.map(k=>{
+    const r=db[k],c={P:0,A:0,L:0,H:0};
+    Object.values(r.att||{}).forEach(v=>{if(c[v]!==undefined)c[v]++});
+    const sv=cleanSavedAt(r.savedAt);
+    return`<div class="rc" onclick="openDay('${k}')">
+      <div class="rc-title">${esc(r.label||k)}</div>
+      <div class="rc-sub">${sv?'Saved: '+esc(sv):''} &nbsp;&#183;&nbsp; ${r.phones||0} phones</div>
+      <div class="pills"><span class="pill pp">P: ${c.P}</span><span class="pill pa">A: ${c.A}</span>
+      <span class="pill pl">L: ${c.L}</span><span class="pill ph2">H: ${c.H}</span></div>
+    </div>`;
+  }).join('');
+}
+function renderMonthList(){
+  const db=getDB(),keys=Object.keys(db).sort(),months={};
+  keys.forEach(k=>{const m=k.slice(0,7);(months[m]=months[m]||[]).push(k)});
+  const el=document.getElementById('tab-month-content');
+  if(!Object.keys(months).length){el.innerHTML='<div class="empty">No records yet</div>';return}
+  el.innerHTML=Object.keys(months).reverse().map(m=>{
+    const [y,mo]=m.split('-');
+    const label=new Date(y,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    const days=months[m],c={P:0,A:0,L:0,H:0};
+    days.forEach(d=>Object.values(db[d].att||{}).forEach(v=>{if(c[v]!==undefined)c[v]++}));
+    return`<div class="rc">
+      <div class="rc-title">${label}</div>
+      <div class="rc-sub">${days.length} days recorded</div>
+      <div class="pills"><span class="pill pp">P: ${c.P}</span><span class="pill pa">A: ${c.A}</span>
+      <span class="pill pl">L: ${c.L}</span><span class="pill ph2">H: ${c.H}</span></div>
+      <button class="month-dl-btn" onclick="event.stopPropagation();pdfMonth('${m}')">Download Monthly PDF</button>
+      <button class="month-dl-btn" style="background:#0f766e" onclick="event.stopPropagation();csvMonth('${m}')">Download Monthly CSV</button>
+    </div>`;
+  }).join('');
+}
+function openDay(k){
+  viewDayKey=k;const db=getDB(),r=db[k];if(!r)return;
+  document.getElementById('dayTitle').textContent=r.label||k;
+  const c={P:0,A:0,L:0,H:0};
+  STAFF.forEach(s=>{const v=r.att[s.id];if(c[v]!==undefined)c[v]++});
+  document.getElementById('daySummary').innerHTML=
+    `<div class="sb"><div class="sb-n np">${c.P}</div><div class="sb-l">Present</div></div>
+     <div class="sb"><div class="sb-n na">${c.A}</div><div class="sb-l">Absent</div></div>
+     <div class="sb"><div class="sb-n nl">${c.L}</div><div class="sb-l">Late</div></div>
+     <div class="sb"><div class="sb-n nh">${c.H}</div><div class="sb-l">Half</div></div>`;
+  const rph=r.ph||{};
+  document.getElementById('dayTable').innerHTML=STAFF.map((s,i)=>{
+    const st=r.att[s.id]||'-',lt=(r.late&&r.late[s.id])||'';
+    const pm=st==='A'?'—':(rph[s.id]?'✓':'✕');
+    return`<tr><td style="color:#aaa;width:22px">${i+1}</td>
+      <td style="font-weight:700">${esc(s.name)}</td>
+      <td style="color:#888">${esc(s.dept)}</td>
+      <td><span class="badge b${['P','A','L','H'].includes(st)?st:'X'}">${st}</span></td>
+      <td style="color:#d97706;font-size:12px;font-weight:700">${esc(lt)}</td>
+      <td style="font-size:12px">${pm}</td></tr>`;
+  }).join('');
+  if(mStack[mStack.length-1]==='repMod')swapM('repMod','dayMod');else openM('dayMod');
+}
+function backToReports(){switchTab(curTab);swapM('dayMod','repMod')}
+
+/* ── whatsapp ── */
+function waDay(kind){
+  if(!viewDayKey)return;
+  const db=getDB(),r=db[viewDayKey],rph=r.ph||{};
+  const c={P:0,A:0,L:0,H:0};
+  STAFF.forEach(s=>{const v=r.att[s.id];if(c[v]!==undefined)c[v]++});
+  let msg;
+  if(kind==='full'){
+    const lines=STAFF.map((s,i)=>{
+      const st=r.att[s.id]||'-',lt=(r.late&&r.late[s.id])?' ('+r.late[s.id]+')':'';
+      return(i+1)+'. '+s.name+' ('+s.dept+') - '+st+lt;
+    });
+    msg=['*ATTENDANCE REPORT*','Date: '+(r.label||viewDayKey),
+      'Present '+c.P+' | Absent '+c.A+' | Late '+c.L+' | Half '+c.H,
+      'Phone jama: '+(r.phones||0),'','*EMPLOYEE STATUS*',''].concat(lines).join('\n');
+  }else{
+    const abs=[],lt=[],hf=[],np=[];
+    STAFF.forEach(s=>{
+      const st=r.att[s.id];
+      if(st==='A')abs.push(s.name+' ('+s.dept+')');
+      if(st==='L')lt.push(s.name+' '+((r.late&&r.late[s.id])||''));
+      if(st==='H')hf.push(s.name);
+      if(st&&st!=='A'&&!rph[s.id])np.push(s.name);
+    });
+    msg='*Attendance — '+(r.label||viewDayKey)+'*\n'+
+        'Present '+c.P+' | Absent '+c.A+' | Late '+c.L+' | Half-day '+c.H;
+    if(abs.length)msg+='\n\n*Absent:* '+abs.join(', ');
+    if(lt.length)msg+='\n*Late:* '+lt.join(', ');
+    if(hf.length)msg+='\n*Half-day:* '+hf.join(', ');
+    if(np.length)msg+='\n*Phone jama nahi:* '+np.join(', ');
+  }
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+/* ── CSV ── */
+function csvMonth(m){
+  const db=getDB(),days=Object.keys(db).filter(k=>k.startsWith(m)).sort();
+  if(!days.length){toast('Is mahine ka data nahi');return}
+  const rows=[['Date','Name','Dept','Status','LateTime','PhoneJama']];
+  days.forEach(d=>{
+    const r=db[d],rph=r.ph||{};
+    STAFF.forEach(s=>rows.push([d,s.name,s.dept,r.att[s.id]||'-',(r.late&&r.late[s.id])||'',
+      r.att[s.id]==='A'?'':(rph[s.id]?'Yes':'No')]));
+  });
+  dl('attendance-'+m+'.csv',rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv');
+}
+
+/* ── PDF day ── */
+/* SPEED: jsPDF (~350KB) sirf tab load hota hai jab PDF banana ho */
+let jspdfP=null;
+function loadJsPDF(){
+  if(window.jspdf)return Promise.resolve();
+  if(jspdfP)return jspdfP;
+  setLoad(true);
+  jspdfP=new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    s.onload=()=>{setLoad(false);res()};
+    s.onerror=()=>{setLoad(false);jspdfP=null;rej(new Error('fail'))};
+    document.head.appendChild(s);
+  });
+  return jspdfP;
+}
+async function pdfDay(){
+  if(!viewDayKey)return;
+  try{await loadJsPDF()}catch(e){toast('PDF library nahi aayi — ek baar internet se kholo');return}
+  const db=getDB(),r=db[viewDayKey],rph=r.ph||{};
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const pw=210,ph2=297,mg=12,cw=186,sv=cleanSavedAt(r.savedAt);
+  doc.setFillColor(22,163,74);doc.rect(0,0,pw,22,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(14);doc.setFont(undefined,'bold');
+  doc.text('DAILY ATTENDANCE REPORT',pw/2,10,{align:'center'});
+  doc.setFontSize(9);doc.setFont(undefined,'normal');
+  doc.text((r.label||viewDayKey)+(sv?' | Saved: '+sv:''),pw/2,17,{align:'center'});
+  const c={P:0,A:0,L:0,H:0};
+  STAFF.forEach(s=>{const v=r.att[s.id];if(c[v]!==undefined)c[v]++});
+  const bw=cw/5-2;
+  [{l:'Present',v:c.P,bg:[220,252,231],tc:[22,101,52]},
+   {l:'Absent',v:c.A,bg:[254,226,226],tc:[153,27,27]},
+   {l:'Late',v:c.L,bg:[254,243,199],tc:[146,64,14]},
+   {l:'Half-day',v:c.H,bg:[219,234,254],tc:[30,64,175]},
+   {l:'Phones',v:r.phones||0,bg:[243,232,255],tc:[109,40,217]}
+  ].forEach((b,i)=>{
+    const bx=mg+i*(bw+2.5);
+    doc.setFillColor(...b.bg);doc.roundedRect(bx,26,bw,16,2,2,'F');
+    doc.setTextColor(...b.tc);doc.setFontSize(14);doc.setFont(undefined,'bold');
+    doc.text(String(b.v),bx+bw/2,35,{align:'center'});
+    doc.setFontSize(6.5);doc.setFont(undefined,'normal');doc.text(b.l,bx+bw/2,40,{align:'center'});
+  });
+  let y=46;
+  doc.setFillColor(30,30,30);doc.rect(mg,y,cw,6,'F');
+  doc.setTextColor(255,255,255);doc.setFontSize(7);doc.setFont(undefined,'bold');
+  doc.text('#',mg+2,y+4);doc.text('Name',mg+10,y+4);doc.text('Dept',mg+62,y+4);
+  doc.text('Status',mg+100,y+4);doc.text('Late',mg+122,y+4);doc.text('Phone',mg+145,y+4);doc.text('Saved',mg+165,y+4);
+  y+=6;
+  const stBg={P:[220,252,231],A:[254,226,226],L:[254,243,199],H:[219,234,254],'-':[245,245,245]};
+  const stTc={P:[22,163,74],A:[220,38,38],L:[217,119,6],H:[37,99,235],'-':[150,150,150]};
+  STAFF.forEach((s,i)=>{
+    const st=r.att[s.id]||'-',lt=(r.late&&r.late[s.id])||'';
+    doc.setFillColor(...(i%2===0?[255,255,255]:[249,250,251]));doc.rect(mg,y,cw,6.5,'F');
+    doc.setDrawColor(240,240,240);doc.rect(mg,y,cw,6.5,'D');
+    doc.setTextColor(160,160,160);doc.setFontSize(7);doc.setFont(undefined,'normal');doc.text(String(i+1),mg+2,y+4.5);
+    doc.setTextColor(20,20,20);doc.text(String(s.name).slice(0,22),mg+10,y+4.5);
+    doc.setTextColor(100,100,100);doc.text(String(s.dept).slice(0,14),mg+62,y+4.5);
+    doc.setFillColor(...(stBg[st]||stBg['-']));doc.roundedRect(mg+98,y+1,15,4.5,1,1,'F');
+    doc.setTextColor(...(stTc[st]||stTc['-']));doc.setFontSize(7);doc.setFont(undefined,'bold');
+    doc.text(st,mg+105.5,y+4.5,{align:'center'});
+    doc.setFont(undefined,'normal');
+    doc.setTextColor(217,119,6);doc.text(lt,mg+122,y+4.5);
+    doc.setTextColor(109,40,217);doc.text(st==='A'?'-':(rph[s.id]?'Y':'N'),mg+147,y+4.5);
+    doc.setTextColor(120,120,120);doc.text(cleanSavedAt(r.savedAt),mg+163,y+4.5);
+    y+=6.5;
+    if(y>ph2-16){doc.addPage();y=14}
+  });
+  doc.setDrawColor(200,200,200);doc.line(mg,ph2-11,pw-mg,ph2-11);
+  doc.setTextColor(150,150,150);doc.setFontSize(7);
+  doc.text('Generated: '+new Date().toLocaleString('en-IN'),mg,ph2-6);
+  doc.save('Attendance_'+viewDayKey+'.pdf');
+  toast('PDF ready!');
+}
+
+/* ── PDF monthly ── */
+function pdfMonth(month){
+  loadJsPDF().then(()=>buildMonthPDF(month))
+    .catch(()=>toast('PDF library nahi aayi — ek baar internet se kholo'));
+}
+function buildMonthPDF(month){
+  const db=getDB(),[y,mo]=month.split('-');
+  const monthLabel=new Date(y,mo-1,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  const days=Object.keys(db).filter(k=>k.startsWith(month)).sort();
+  if(!days.length){toast('No data for this month!');return}
+  const {jsPDF}=window.jspdf;
+  const pw=210,ph2=297,mg=10,cw=190;
+  const rowH=Math.min(8,Math.max(4.5,parseFloat(((ph2-98)/days.length).toFixed(1))));
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  STAFF.forEach((staff,si)=>{
+    if(si>0)doc.addPage();
+    doc.setFillColor(22,163,74);doc.rect(0,0,pw,20,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(13);doc.setFont(undefined,'bold');
+    doc.text('MONTHLY ATTENDANCE REPORT',pw/2,9,{align:'center'});
+    doc.setFontSize(9);doc.setFont(undefined,'normal');doc.text(monthLabel,pw/2,16,{align:'center'});
+    doc.setFillColor(240,253,244);doc.setDrawColor(134,239,172);
+    doc.roundedRect(mg,23,cw,13,2,2,'FD');
+    doc.setTextColor(22,101,52);doc.setFontSize(12);doc.setFont(undefined,'bold');
+    doc.text(String(staff.name),mg+4,30);
+    doc.setFontSize(8);doc.setFont(undefined,'normal');
+    doc.text('Dept: '+staff.dept,mg+4,36);
+    doc.setTextColor(100,100,100);doc.text('Page '+(si+1)+'/'+STAFF.length,pw-mg-4,30,{align:'right'});
+    const c={P:0,A:0,L:0,H:0};
+    days.forEach(d=>{const v=db[d]&&db[d].att&&db[d].att[staff.id];if(v&&c[v]!==undefined)c[v]++});
+    const bw=cw/5-2.5;
+    [{l:'Present',v:c.P,bg:[220,252,231],tc:[22,101,52]},
+     {l:'Absent',v:c.A,bg:[254,226,226],tc:[153,27,27]},
+     {l:'Late',v:c.L,bg:[254,243,199],tc:[146,64,14]},
+     {l:'Half-day',v:c.H,bg:[219,234,254],tc:[30,64,175]},
+     {l:'Total Days',v:days.length,bg:[243,232,255],tc:[109,40,217]}
+    ].forEach((b,i)=>{
+      const bx=mg+i*(bw+3);
+      doc.setFillColor(...b.bg);doc.roundedRect(bx,39,bw,14,2,2,'F');
+      doc.setTextColor(...b.tc);doc.setFontSize(12);doc.setFont(undefined,'bold');
+      doc.text(String(b.v),bx+bw/2,47,{align:'center'});
+      doc.setFontSize(6);doc.setFont(undefined,'normal');doc.text(b.l,bx+bw/2,52,{align:'center'});
+    });
+    let y2=57;
+    doc.setFillColor(30,30,30);doc.rect(mg,y2,cw,5.5,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(6.5);doc.setFont(undefined,'bold');
+    doc.text('#',mg+2,y2+3.8);doc.text('Date',mg+9,y2+3.8);doc.text('Day',mg+42,y2+3.8);
+    doc.text('Status',mg+62,y2+3.8);doc.text('Late Time',mg+84,y2+3.8);
+    doc.text('Phone',mg+118,y2+3.8);doc.text('Saved At',mg+144,y2+3.8);
+    y2+=5.5;
+    const stBg={P:[220,252,231],A:[254,226,226],L:[254,243,199],H:[219,234,254],'-':[245,245,245]};
+    const stTc={P:[22,163,74],A:[220,38,38],L:[217,119,6],H:[37,99,235],'-':[150,150,150]};
+    days.forEach((d,di)=>{
+      const rec=db[d]||{},st=(rec.att&&rec.att[staff.id])||'-';
+      const lt=(rec.late&&rec.late[staff.id])||'';
+      const pj=st==='A'?'-':((rec.ph&&rec.ph[staff.id])?'Y':'N');
+      const sv=cleanSavedAt(rec.savedAt);
+      const dobj=new Date(d+'T00:00:00'),mid=y2+rowH*0.68;
+      doc.setFillColor(...(di%2===0?[255,255,255]:[248,250,252]));doc.rect(mg,y2,cw,rowH,'F');
+      doc.setDrawColor(230,230,230);doc.rect(mg,y2,cw,rowH,'D');
+      doc.setTextColor(180,180,180);doc.setFontSize(6);doc.setFont(undefined,'normal');doc.text(String(di+1),mg+2,mid);
+      doc.setTextColor(20,20,20);doc.setFontSize(6.5);
+      doc.text(dobj.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),mg+9,mid);
+      doc.setTextColor(100,100,100);doc.text(dobj.toLocaleDateString('en-IN',{weekday:'short'}),mg+42,mid);
+      doc.setFillColor(...(stBg[st]||stBg['-']));doc.roundedRect(mg+59,y2+rowH*.15,13,rowH*.7,1,1,'F');
+      doc.setTextColor(...(stTc[st]||stTc['-']));doc.setFontSize(6.5);doc.setFont(undefined,'bold');
+      doc.text(st,mg+65.5,mid,{align:'center'});
+      doc.setFont(undefined,'normal');
+      doc.setTextColor(217,119,6);doc.setFontSize(6.5);doc.text(lt,mg+84,mid);
+      doc.setTextColor(109,40,217);doc.text(pj,mg+118,mid);
+      doc.setTextColor(120,120,120);doc.text(sv,mg+144,mid);
+      y2+=rowH;
+    });
+    doc.setDrawColor(200,200,200);doc.line(mg,ph2-11,pw-mg,ph2-11);
+    doc.setTextColor(150,150,150);doc.setFontSize(6.5);doc.setFont(undefined,'normal');
+    doc.text('Generated: '+new Date().toLocaleString('en-IN'),mg,ph2-6);
+    doc.text(staff.name+' | '+monthLabel,pw/2,ph2-6,{align:'center'});
+  });
+  doc.save('Monthly_'+monthLabel.replace(' ','_')+'.pdf');
+  toast('Monthly PDF ready!');
+}
+
+/* ── init ── */
+loadStaff();
+const ts=todayStr();
+document.getElementById('datePicker').value=ts;
+document.getElementById('datePicker').max=ts;
+document.getElementById('dtLabel').textContent=fmtKey(ts);
+renderChips();
+loadCurDate();
+
+/* SPEED: sync ab load ko rokti nahi. Aaj ka record pehle se hai to
+   background sync skip — sirf naye phone / naye din par chalti hai. */
+setTimeout(function(){
+  if(!navigator.onLine)return;
+  const db=getDB();
+  const last=parseInt(localStorage.getItem('att_last_sync')||'0')||0;
+  /* aaj ka record hai aur 3 ghante se kam purana sync hai to skip */
+  if(db[ts]&&(Date.now()-last)<3*3600*1000)return;
+  syncFromSheets(false);
+},1200);
+
+/* ── PWA ── */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+/* home screen pe lagane ka button — Chrome ke prompt ke saath */
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();deferredPrompt=e;
+  const b=document.getElementById('installBtn');
+  if(b)b.style.display='flex';
+});
+function doInstall(){
+  if(!deferredPrompt)return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.finally(function(){
+    deferredPrompt=null;
+    const b=document.getElementById('installBtn');
+    if(b)b.style.display='none';
+  });
+}
+window.addEventListener('appinstalled',function(){
+  const b=document.getElementById('installBtn');
+  if(b)b.style.display='none';
+  toast('Home screen pe lag gaya');
+});
+</script>
+</body>
+</html>
